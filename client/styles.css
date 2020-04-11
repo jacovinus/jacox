@@ -30,7 +30,21 @@ video{
 .header{
     position:absolute;
     top:0px;
-    height:40px;
-    background:black;
+    height:50px;
+   background:rgba(0, 251, 216,.25);
     width:100%;
+ 
+  box-shadow: 10px 0px 40px black;
+
+}
+.header h1{
+  background:rgba(0, 251, 216,.25);
+  padding:10px;
+  font-weight:lighter;
+  font-size:14px;
+  letter-spacing: 2px;
+  text-transform:uppercase;
+  color:rgba(0, 256, 216,1);
+  text-shadow:2px 2px 5px black;
+    
 }
