@@ -5,7 +5,7 @@ var ctx = c.getContext("2d");
 c.height = window.innerHeight;
 c.width = window.innerWidth;
 
-//chars characters - taken from the unicode charset
+//chars characters - taken from the unicode charset will be displayed on background
 var chars = "ወwደeማlትlሪcክoስmeእtንoኳtንhበeደmህaናxtመrጡi";
 //converting the string into an array of single characters
 chars = chars.split("");
@@ -27,7 +27,7 @@ function draw()
 	ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
 	ctx.fillRect(0, 0, c.width, c.height);
 	
-	ctx.fillStyle = "#0F0"; //green text
+	ctx.fillStyle = "#00fbdb"; //green text
 	ctx.font = font_size + "px arial";
 	//looping over drops
 	for(var i = 0; i < drops.length; i++)

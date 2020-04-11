@@ -44,7 +44,7 @@ var constraints = {audio : true,
 
 function onSuccess(stream) {
     console.log("U r in the matrix biatch!")
-    videoArea.srcObject=stream;
+    videoArea.srcObject = stream;
     videoArea.play();
 }
 function onError(error) {
