@@ -9,6 +9,7 @@ async function getMedia(constraints) {
       console.log(stream)
     } catch(err) {
       /* handle the error */
+      console.log(err)
     }
   }
 
