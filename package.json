@@ -2,17 +2,21 @@
   "name": "jacox",
   "version": "1.0.0",
   "description": "webrtc chat",
-  "main": "index.js",
+  "main": "server/index.js",
   "scripts": {
     "start": "nodemon server/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+    "engines": {
+    "node": "12.x"
   },
   "author": "jacovinus@gmail.com",
   "license": "ISC",
   "dependencies": {
     "ejs": "^3.0.2",
     "express": "^4.17.1",
-    "nodemon": "^2.0.2",
-    "socket.io": "^2.3.0"
+    "nodemon": "^2.0.3",
+    "socket.io": "^2.3.0",
+    "http": "^0.0.0"
   }
 }

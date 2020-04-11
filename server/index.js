@@ -1,15 +1,13 @@
-let express = require('express');
-let PORT = process.env.port || 666;
+let express = require("express");
+let PORT = process.env.PORT|| 666;
 let app = express();
-let server = require('http').Server(app);
-let io = require('socket.io')(server);
-app.use(express.static('client'))
 
-server.listen(PORT,()=>{
-    console.log("\x1b[36m",`Wellcome mortal \n the jacox server is up and running on por ${PORT}`)
+app.use(express.static("client"));
 
-    console.log('%c', 'padding:28px 119px;line-height:100px;background:red; no-repeat;')
+app.get('/',(req,res)=> {
+  res.sendFile(__dirname + "/client/index.html")
 })
-io.on('connection',($socket)=>{
-    console.log("el nodo con Ip " + socket.handshake.address + " Se ha conectado")
+  
+const listener = app.listen(PORT,()=> {
+  console.log("JACOX server is listening on port ",listener.address().port);
 })
