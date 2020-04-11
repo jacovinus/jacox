@@ -13,7 +13,7 @@ canvas {display: block; z-index:-1; width:100vw;height:100vh;}
    left:30px;
 
    z-index:1;
-    filter: hue-rotate(10deg);
+    filter: hue-rotate(140deg);
 
 border-radius:10px;
 box-shadow: 10px 10px 40px black;
@@ -24,6 +24,7 @@ video{
     border-radius:10px;
     padding:15px;
     background:rgb(45, 45, 45);
+    
     
 }
 
