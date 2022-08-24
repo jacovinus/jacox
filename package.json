@@ -1,14 +1,13 @@
 {
   "name": "jacox",
   "version": "1.0.0",
-  "description": "webrtc chat",
+  "description": "jacox webrtc chat",
   "main": "server/index.js",
   "scripts": {
-    "start": "nodemon server/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "nodemon server/index.js"
   },
     "engines": {
-    "node": "12.x"
+    "node": "16.x"
   },
   "author": "jacovinus@gmail.com",
   "license": "ISC",
