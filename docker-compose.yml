@@ -1,0 +1,18 @@
+services:
+  jacox:
+    build: .
+    container_name: jacox
+    ports:
+      - "8080:8080"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - JACOX_SERVER_HOST=0.0.0.0
+      - JACOX_DATABASE_PATH=/app/data/chat.db
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./chat.db-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  chat.db-data:

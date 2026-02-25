@@ -1,0 +1,7 @@
+target/
+.git/
+.env
+chat.db
+*.txt
+*.html
+!static/*.html

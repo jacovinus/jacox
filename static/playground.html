@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jacox | Interactive Playground</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b0e14;
+            --accent: #8a2be2;
+            --accent-glow: rgba(138, 43, 226, 0.4);
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0ba;
+            --code-bg: #161b22;
+            --user-msg: rgba(138, 43, 226, 0.2);
+            --ai-msg: rgba(255, 255, 255, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent) 0%, #d8b4fe 100%);
+            border-radius: 8px;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        /* Playground Layout */
+        .playground-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+            min-height: 700px;
+        }
+
+        .sidebar {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .chat-container {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .chat-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            max-height: 550px;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 1rem 1.5rem;
+            border-radius: 18px;
+            font-size: 0.95rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: var(--user-msg);
+            border-bottom-right-radius: 4px;
+            border: 1px solid rgba(138, 43, 226, 0.3);
+        }
+
+        .message.ai {
+            align-self: flex-start;
+            background: var(--ai-msg);
+            border-bottom-left-radius: 4px;
+            border: 1px solid var(--card-border);
+        }
+
+        .chat-input-area {
+            padding: 1.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            gap: 1rem;
+            border-top: 1px solid var(--card-border);
+        }
+
+        .input-box {
+            flex-grow: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 0.8rem 1.2rem;
+            color: white;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-box:focus {
+            border-color: var(--accent);
+        }
+
+        .btn {
+            background: var(--accent);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px var(--accent-glow);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .status-online {
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+        }
+
+        .status-offline {
+            background: #ef4444;
+        }
+
+        .terminal-block {
+            background: var(--code-bg);
+            padding: 1rem;
+            border-radius: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #d1d5db;
+        }
+
+        #chunk-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 18px;
+            background: var(--accent);
+            margin-left: 2px;
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon"></div>
+                Jacox Playground
+            </div>
+            <a href="/" style="color: var(--text-secondary); text-decoration: none; font-size: 0.9rem;">← Back to
+                Docs</a>
+        </header>
+
+        <div class="playground-grid">
+            <div class="sidebar">
+                <div>
+                    <label>API Key</label>
+                    <input type="password" id="apikey" value="sk-dev-key-123">
+
+                    <label>Session Context</label>
+                    <input type="text" id="session_id" placeholder="Auto-generated on connect" readonly>
+
+                    <button class="btn" id="connect_btn" onclick="initPlayground()" style="width: 100%;">Initialize
+                        Playground</button>
+                </div>
+
+                <div style="flex-grow: 1;">
+                    <label>Active Configuration</label>
+                    <div class="terminal-block">
+                        <span style="color: #6b7280;"># Current model:</span><br>
+                        Mistral-7B (Ollama)<br><br>
+                        <span style="color: #6b7280;"># Connection:</span><br>
+                        WebSocket / Streaming
+                    </div>
+                </div>
+
+                <div id="connection_status" style="font-size: 0.85rem; color: var(--text-secondary);">
+                    <span class="status-dot status-offline"></span> Disconnected
+                </div>
+            </div>
+
+            <div class="chat-container">
+                <div class="chat-header">
+                    <div>
+                        <span style="font-weight: 600;">Mistral Playground</span>
+                        <p style="font-size: 0.75rem; color: var(--text-secondary);">Streaming Enabled</p>
+                    </div>
+                    <button class="btn"
+                        style="background: rgba(255,255,255,0.05); padding: 0.5rem 1rem; border: 1px solid var(--card-border);"
+                        onclick="clearChat()">Clear</button>
+                </div>
+
+                <div class="chat-messages" id="chat_messages">
+                    <div class="message ai">
+                        Hello! I'm Mistral, running locally through Jacox. Initialize the connection on the left to
+                        start testing real-time streaming tokens.
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+                    <input type="text" class="input-box" id="user_input" placeholder="Type your message..." disabled
+                        onkeypress="if(event.key === 'Enter') sendMessage()">
+                    <button class="btn" id="send_btn" onclick="sendMessage()" disabled>Send</button>
+                </div>
+            </div>
+        </div>
+
+        <footer
+            style="margin-top: 4rem; text-align: center; color: rgba(255,255,255,0.2); font-size: 0.8rem; padding: 2rem;">
+            Jacox LLM Server | High-Performance Rust Backend
+        </footer>
+    </div>
+
+    <script>
+        let ws;
+        let currentAiMessageElement = null;
+
+        async function initPlayground() {
+            const apiKey = document.getElementById('apikey').value;
+            const connectBtn = document.getElementById('connect_btn');
+
+            connectBtn.innerText = "Creating Session...";
+            connectBtn.disabled = true;
+
+            try {
+                // 1. Create a session via REST API
+                const resp = await fetch('/sessions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: 'Playground Session' })
+                });
+
+                if (!resp.ok) throw new Error("Auth failed or server unreachable");
+
+                const session = await resp.json();
+                document.getElementById('session_id').value = session.id;
+
+                // 2. Connect WebSocket
+                connectWs(session.id, apiKey);
+
+            } catch (err) {
+                alert(err.message);
+                connectBtn.innerText = "Initialize Playground";
+                connectBtn.disabled = false;
+            }
+        }
+
+        function connectWs(sessionId, apiKey) {
+            const statusDot = document.querySelector('.status-dot');
+            const statusText = document.getElementById('connection_status');
+
+            ws = new WebSocket(`${window.location.origin.replace('http', 'ws')}/ws/chat/${sessionId}?api_key=${apiKey}`);
+
+            ws.onopen = () => {
+                statusDot.className = "status-dot status-online";
+                statusText.innerHTML = `<span class="status-dot status-online"></span> Connected to Jacox`;
+                document.getElementById('user_input').disabled = false;
+                document.getElementById('send_btn').disabled = false;
+                document.getElementById('connect_btn').innerText = "Re-initialize";
+                document.getElementById('connect_btn').disabled = false;
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+
+                if (data.type === 'chunk') {
+                    if (!currentAiMessageElement) {
+                        currentAiMessageElement = createMessageElement('ai', '');
+                        document.getElementById('chat_messages').appendChild(currentAiMessageElement);
+                    }
+                    // Remove cursor if exists
+                    const cursor = currentAiMessageElement.querySelector('#chunk-cursor');
+                    if (cursor) cursor.remove();
+
+                    currentAiMessageElement.innerHTML += data.content + '<span id="chunk-cursor"></span>';
+                    scrollToBottom();
+                } else if (data.type === 'done') {
+                    const cursor = currentAiMessageElement.querySelector('#chunk-cursor');
+                    if (cursor) cursor.remove();
+                    currentAiMessageElement = null;
+                }
+            };
+
+            ws.onclose = () => {
+                statusDot.className = "status-dot status-offline";
+                statusText.innerText = "Disconnected";
+                document.getElementById('user_input').disabled = true;
+                document.getElementById('send_btn').disabled = true;
+            };
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('user_input');
+            const text = input.value.trim();
+            if (!text || !ws) return;
+
+            // Add user message to UI
+            const msgEl = createMessageElement('user', text);
+            document.getElementById('chat_messages').appendChild(msgEl);
+
+            // Send to WS
+            ws.send(JSON.stringify({
+                type: 'message',
+                content: text,
+                stream: true
+            }));
+
+            input.value = '';
+            scrollToBottom();
+        }
+
+        function createMessageElement(role, content) {
+            const div = document.createElement('div');
+            div.className = `message ${role}`;
+            div.innerText = content;
+            return div;
+        }
+
+        function clearChat() {
+            document.getElementById('chat_messages').innerHTML = '';
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('chat_messages');
+            container.scrollTop = container.scrollHeight;
+        }
+    </script>
+</body>
+
+</html>
