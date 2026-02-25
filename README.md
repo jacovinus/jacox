@@ -17,7 +17,7 @@
 ### 1. Installation
 Ensure you have the Rust toolchain installed.
 ```bash
-git clone https://github.com/joelguerra/jacox.git
+git clone https://github.com/jacovinus/jacox.git
 cd jacox
 cargo build --release
 ```
