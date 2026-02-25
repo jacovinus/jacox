@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket LLM Test</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+        }
+
+        #output {
+            white-space: pre-wrap;
+            background: #f4f4f4;
+            padding: 20px;
+            border-radius: 8px;
+            min-height: 200px;
+        }
+
+        input {
+            width: 80%;
+            padding: 10px;
+        }
+
+        button {
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>LLM WebSocket Streaming</h2>
+
+    <div>
+        <label>Session ID:</label><br />
+        <input type="text" id="session" placeholder="e.g. 550e8400..." />
+    </div>
+
+    <div style="margin-top: 10px;">
+        <label>API Key:</label><br />
+        <input type="password" id="apikey" value="sk-dev-key-123" />
+        <button onclick="connect_ws()">Connect</button>
+    </div>
+
+    <div style="margin-top: 20px;">
+        <input type="text" id="message" placeholder="Ask a question..." />
+        <button onclick="send_message()">Send</button>
+    </div>
+
+    <h4 id="status">Disconnected</h4>
+
+    <div id="output"></div>
+
+    <script>
+        let ws;
+
+        function connect_ws() {
+            const sid = document.getElementById("session").value;
+            const key = document.getElementById("apikey").value;
+            ws = new WebSocket(`ws://localhost:8080/ws/chat/${sid}?api_key=${key}`);
+
+            ws.onopen = () => {
+                document.getElementById("status").innerText = "Connected! 🟢";
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === "chunk") {
+                    document.getElementById("output").innerText += data.content;
+                } else if (data.type === "done") {
+                    document.getElementById("output").innerText += "\n[STREAM COMPLETE]";
+                } else if (data.type === "error") {
+                    document.getElementById("output").innerText += "\n[ERROR]: " + data.content;
+                }
+            };
+
+            ws.onclose = () => {
+                document.getElementById("status").innerText = "Disconnected 🔴";
+            }
+        }
+
+        function send_message() {
+            if (!ws) return alert("Connect first!");
+            const txt = document.getElementById("message").value;
+            document.getElementById("output").innerText = ""; // clear
+
+            ws.send(JSON.stringify({
+                type: "message",
+                content: txt,
+                stream: true
+            }));
+
+            document.getElementById("message").value = "";
+        }
+    </script>
+</body>
+
+</html>

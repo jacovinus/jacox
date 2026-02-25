@@ -1,0 +1,11 @@
+/target
+.env
+*.db*
+/dist
+/chat.db-data
+/data
+debug/
+release/
+.agent/
+.vscode/
+.DS_Store

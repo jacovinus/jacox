@@ -1,0 +1,33 @@
+server:
+  host: "127.0.0.1"
+  port: 8080
+
+database:
+  path: "./chat.db"
+
+auth:
+  api_keys:
+    - "sk-dev-key-123"
+  token_expiry_hours: 24
+
+llm:
+  provider: "ollama"  # openai, anthropic, ollama, custom
+  model: "mistral"
+  
+  openai:
+    api_base: "https://api.openai.com/v1"
+    api_key: "${OPENAI_API_KEY}"
+    default_model: "gpt-4o"
+  
+  anthropic:
+    api_base: "https://api.anthropic.com"
+    api_key: "${ANTHROPIC_API_KEY}"
+    default_model: "claude-3-5-sonnet-20241022"
+  
+  ollama:
+    base_url: "http://localhost:11434"
+    default_model: "mistral"
+
+chat:
+  max_history_messages: 50
+  system_prompt: "You are a helpful assistant."
