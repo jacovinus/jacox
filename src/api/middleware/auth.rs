@@ -50,8 +50,12 @@ where
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let srv = self.service.clone();
 
-        // Skip auth for /health, /playground and root landing page
-        if req.path() == "/health" || req.path() == "/" || req.path() == "/playground" {
+        // Skip auth for /health, /playground, root landing page, and OPTIONS requests
+        if req.method() == actix_web::http::Method::OPTIONS 
+            || req.path() == "/health" 
+            || req.path() == "/" 
+            || req.path() == "/playground" 
+        {
             return Box::pin(async move { srv.call(req).await });
         }
 

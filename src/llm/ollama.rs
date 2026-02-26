@@ -30,9 +30,17 @@ impl LlmProvider for OllamaProvider {
     async fn chat(&self, messages: &[Message], options: ChatOptions) -> Result<ChatResponse, LlmError> {
         let model = options.model.as_deref().unwrap_or(&self.default_model);
 
+        let mut final_messages: Vec<Message> = messages.to_vec();
+        if let Some(system) = &options.system_prompt {
+            final_messages.insert(0, Message {
+                role: "system".to_string(),
+                content: system.clone(),
+            });
+        }
+
         let body = json!({
             "model": model,
-            "messages": messages,
+            "messages": final_messages,
             "stream": false,
             "options": {
                 "temperature": options.temperature.unwrap_or(0.7),
@@ -79,9 +87,17 @@ impl LlmProvider for OllamaProvider {
     ) -> Result<(), LlmError> {
         let model = options.model.as_deref().unwrap_or(&self.default_model);
 
+        let mut final_messages: Vec<Message> = messages.to_vec();
+        if let Some(system) = &options.system_prompt {
+            final_messages.insert(0, Message {
+                role: "system".to_string(),
+                content: system.clone(),
+            });
+        }
+
         let body = json!({
             "model": model,
-            "messages": messages,
+            "messages": final_messages,
             "stream": true,
             "options": {
                 "temperature": options.temperature.unwrap_or(0.7),

@@ -1,8 +1,8 @@
-use actix_web::{delete, get, post, web, HttpResponse, Result as WebResult};
+use actix_web::{delete, get, patch, post, web, HttpResponse, Result as WebResult};
 use uuid::Uuid;
 use std::sync::Arc;
 
-use crate::api::models::{CreateMessageRequest, CreateSessionRequest, PaginationQuery};
+use crate::api::models::{CreateMessageRequest, CreateSessionRequest, UpdateSessionRequest, PaginationQuery};
 use crate::db::{service::DbService, DbPool};
 use crate::llm::{LlmProvider, models::{Message as LlmMessage, ChatOptions}};
 
@@ -55,15 +55,22 @@ pub async fn delete_session(
     id: web::Path<Uuid>,
 ) -> WebResult<HttpResponse> {
     let conn = pool.lock().unwrap();
-    let id = id.into_inner();
-    
-    // Check if exists first for better 404 handling
-    if DbService::get_session(&conn, id).unwrap_or(None).is_none() {
-        return Ok(HttpResponse::NotFound().finish());
-    }
-
-    match DbService::delete_session(&conn, id) {
+    match DbService::delete_session(&conn, id.into_inner()) {
         Ok(_) => Ok(HttpResponse::NoContent().finish()),
+        Err(e) => Ok(HttpResponse::InternalServerError().body(e.to_string())),
+    }
+}
+
+#[patch("/{id}")]
+pub async fn update_session(
+    pool: web::Data<DbPool>,
+    id: web::Path<Uuid>,
+    req: web::Json<UpdateSessionRequest>,
+) -> WebResult<HttpResponse> {
+    let conn = pool.lock().unwrap();
+    match DbService::update_session(&conn, id.into_inner(), req.name.clone(), req.metadata.clone()) {
+        Ok(Some(session)) => Ok(HttpResponse::Ok().json(session)),
+        Ok(None) => Ok(HttpResponse::NotFound().finish()),
         Err(e) => Ok(HttpResponse::InternalServerError().body(e.to_string())),
     }
 }
@@ -74,6 +81,7 @@ pub async fn delete_session(
 pub async fn add_message(
     pool: web::Data<DbPool>,
     llm: web::Data<Arc<dyn LlmProvider>>,
+    config: web::Data<crate::config::AppConfig>,
     id: web::Path<Uuid>,
     req: web::Json<CreateMessageRequest>,
 ) -> WebResult<HttpResponse> {
@@ -120,6 +128,7 @@ pub async fn add_message(
 
     let chat_options = ChatOptions {
         model: req.model,
+        system_prompt: Some(config.chat.system_prompt.clone()),
         ..Default::default()
     };
 
@@ -235,12 +244,26 @@ pub async fn import_session(
     }
 }
 
+#[get("/stats")]
+pub async fn get_stats(
+    pool: web::Data<DbPool>,
+    config: web::Data<crate::config::AppConfig>,
+) -> WebResult<HttpResponse> {
+    let conn = pool.lock().unwrap();
+    match DbService::get_stats(&conn, &config.database.path) {
+        Ok(stats) => Ok(HttpResponse::Ok().json(stats)),
+        Err(e) => Ok(HttpResponse::InternalServerError().body(e.to_string())),
+    }
+}
+
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/sessions")
             .service(create_session)
             .service(list_sessions)
+            .service(get_stats)
             .service(get_session)
+            .service(update_session)
             .service(delete_session)
             .service(add_message)
             .service(get_messages)

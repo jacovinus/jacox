@@ -32,9 +32,17 @@ impl LlmProvider for OpenAiProvider {
     async fn chat(&self, messages: &[Message], options: ChatOptions) -> Result<ChatResponse, LlmError> {
         let model = options.model.as_deref().unwrap_or(&self.default_model);
 
+        let mut final_messages: Vec<Message> = messages.to_vec();
+        if let Some(system) = &options.system_prompt {
+            final_messages.insert(0, Message {
+                role: "system".to_string(),
+                content: system.clone(),
+            });
+        }
+
         let body = json!({
             "model": model,
-            "messages": messages,
+            "messages": final_messages,
             "temperature": options.temperature.unwrap_or(0.7),
             "max_tokens": options.max_tokens.unwrap_or(4096),
         });
@@ -92,9 +100,17 @@ impl LlmProvider for OpenAiProvider {
     ) -> Result<(), LlmError> {
         let model = options.model.as_deref().unwrap_or(&self.default_model);
 
+        let mut final_messages: Vec<Message> = messages.to_vec();
+        if let Some(system) = &options.system_prompt {
+            final_messages.insert(0, Message {
+                role: "system".to_string(),
+                content: system.clone(),
+            });
+        }
+
         let body = json!({
             "model": model,
-            "messages": messages,
+            "messages": final_messages,
             "stream": true,
             "temperature": options.temperature.unwrap_or(0.7),
             "max_tokens": options.max_tokens.unwrap_or(4096),

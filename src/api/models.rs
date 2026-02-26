@@ -1,4 +1,12 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SystemStats {
+    pub total_sessions: i64,
+    pub total_messages: i64,
+    pub total_tokens: i64,
+    pub db_size_bytes: u64,
+}
 
 #[derive(Debug, Deserialize)]
 pub struct CreateSessionRequest {
@@ -23,6 +31,12 @@ pub struct PaginationQuery {
     pub limit: usize,
     #[serde(default = "default_offset")]
     pub offset: usize,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateSessionRequest {
+    pub name: Option<String>,
+    pub metadata: Option<serde_json::Value>,
 }
 
 fn default_limit() -> usize {

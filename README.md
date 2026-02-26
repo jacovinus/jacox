@@ -1,80 +1,70 @@
-# Jacox: Local-First LLM Chat Server 🚀
+# 🌌 Jacox: The High-Performance LLM Command Center
 
-**Jacox** is a lightweight LLM chat server built in **Rust** with **DuckDB** for lightning-fast conversation memory. It acts as an optimized bridge between your frontends and Large Language Models (OpenAI, Anthropic, or local Ollama).
+**Jacox** is a premium, local-first LLM orchestration platform built with a **Rust** backbone and **DuckDB** intelligence. It’s designed for developers who demand speed, security, and a beautiful interface for their AI workflows.
 
-## ✨ Features
-- **Pluggable LLMs**: Switch providers (OpenAI, Anthropic, Ollama) via YAML.
-- **Embedded Memory**: All chat history stored locally in DuckDB (`chat.db`).
-- **Interactive Playground**: Built-in visual dashboard at `/playground`.
-- **Session Portability**: Export/Import chat histories via `.txt` (CLI & REST).
-- **Deployment Ready**: Docker Compose, Standalone Binary, or Static Linking support.
+---
 
-> [!IMPORTANT]
-> **Check out the [Features & Usage Guide](FEATURES_GUIDE.md) for use cases, and the [Deployment Guide](DEPLOYMENT_GUIDE.md) for production setup.**
+## 🎨 A World-Class Aesthetic
+Jacox isn't just a server; it's a sleek, dark-mode experience inspired by the **Monokai-Gruvbox** palette. 
 
-## 🚀 Quick Start
+- **Rich Markdown Rendering**: Full GFM support with optimized syntax highlighting.
+- **Dynamic Graphics**: Render **Live SVGs** directly in the chat—designed for instant visualization.
+- **Micro-animations**: A fluid, responsive interface that feels alive.
+- **Raw/Formatted Toggles**: Deep-dive into LLM outputs with instant view switching.
 
-### 1. Installation
-Ensure you have the Rust toolchain installed.
+## ⚡ Technical Excellence
+- **Rust Core**: Blazing fast, memory-safe execution using Actix-web.
+- **DuckDB Storage**: Analytical conversation memory in a single file (`chat.db`).
+- **Pluggable Intelligence**: Seamlessly switch between **OpenAI**, **Anthropic**, and **Ollama**.
+- **Real-Time Dashboard**: Monitor tokens, messages, and storage with high-fidelity telemetry.
+
+---
+
+## 🚀 Getting Started
+
+### 1. Build the Engine
 ```bash
 git clone https://github.com/jacovinus/jacox.git
 cd jacox
 cargo build --release
 ```
 
-### 2. Configuration
-Copy `config.yaml` and add your API keys.
+### 2. Configure Your Core
+Edit `config.yaml` to unleash your preferred models:
 ```yaml
 llm:
-  provider: "ollama" # or "openai", "anthropic"
+  provider: "ollama"  # or "openai", "anthropic"
   model: "llama3.2"
-  openai:
-    api_key: "sk-..."
 ```
 
-### 3. Running the Server
+### 3. Launch
 ```bash
 cargo run -- serve
 ```
 
-## 🛠 Usage
+---
 
-### CLI Interface
-```bash
-# List chat sessions
-cargo run -- session list
-
-# Create a new session
-cargo run -- session create --name "Research Project"
-
-# Chat in the terminal (Interactive)
-cargo run -- chat --session <UUID>
-
-# Export/Import (Portability)
-cargo run -- session export <UUID>
-cargo run -- session import --path my_chat.txt
-```
-
-### OpenAI Compatibility
-Point any OpenAI client to Jacox:
-```bash
-curl -X POST http://localhost:8080/v1/chat/completions \
-  -H "Authorization: Bearer sk-dev-key-123" \
-  -d '{
-    "model": "gpt-4o",
-    "messages": [{"role": "user", "content": "Hello"}],
-    "stream": true
-  }'
-```
-
-### Deployment
-For production or portable use:
-- **Docker**: `docker compose up -d`
-- **Standalone**: Run `./package.sh` to generate a `dist/` bundle.
-- **Guide**: See [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for details.
-
-## 🏗 Architecture
-Jacox uses **DuckDB** for analytical storage of chat messages, allowing for complex RAG-like queries in the future. The **Actix-web** layer ensures high concurrency with minimal CPU overhead.
+## � Dashboard & Telemetry
+The built-in dashboard provides a "God-view" of your AI infrastructure:
+- **Token Estimation**: Monitor your API costs with precise heuristics.
+- **Byte-Level Monitoring**: Track your actual database footprint.
+- **Health Telemetry**: Real-time status for your API and DuckDB kernels.
 
 ---
-Built with 🦀 by the Jacox team.
+
+## 🛠 Advanced Features
+
+### 💻 Developer Hub (Playground)
+A full-featured modern React app for managing sessions, editing raw JSON metadata, and overriding system personalities on the fly.
+
+### 🔌 OpenAI Compatible Proxy
+Drop Jacox into any existing OpenAI-ready application. Just point your base URL to `http://localhost:8080/v1`.
+
+### 📦 Deployment Simplified
+- **Docker**: `docker compose up -d` for instant isolation.
+- **CLI**: Re-live the terminal era with a powerful integrated REPL.
+- **Export/Import**: Move your AI brain between environments via structured `.txt` files.
+
+---
+
+Built with 🦀 and 🍕 for those who care about the details.
