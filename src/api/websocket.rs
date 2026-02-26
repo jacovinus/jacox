@@ -19,6 +19,7 @@ pub async fn ws_chat(
     body: web::Payload,
     pool: web::Data<DbPool>,
     llm: web::Data<Arc<dyn LlmProvider>>,
+    config: web::Data<crate::config::AppConfig>,
     session_id: web::Path<Uuid>,
 ) -> Result<HttpResponse, Error> {
     let (response, mut session, mut msg_stream) = actix_ws::handle(&req, body)?;
@@ -37,9 +38,13 @@ pub async fn ws_chat(
 
     info!("WebSocket connection established for session {:?}", id);
 
-    // web::Data<T> behaves like an Arc<T>. To get the inner Arc out of Data<Arc<T>> we deref and clone.
-    let llm_arc = llm.as_ref().clone();
-    let pool_arc = pool.as_ref().clone();
+    // web::Data<T> is effectively Arc<T>.
+    let llm_arc = llm.get_ref().clone();    // Arc<dyn LlmProvider>
+    let pool_arc = pool.get_ref().clone();  // Arc<Mutex<Connection>>
+    
+    // config is web::Data<AppConfig>, which is Arc<AppConfig>
+    // We can get the inner Arc by cloning the Data and calling into_inner()
+    let config_arc = config.clone().into_inner(); 
 
     actix_web::rt::spawn(async move {
         while let Some(Ok(msg)) = msg_stream.next().await {
@@ -50,6 +55,7 @@ pub async fn ws_chat(
                     }
                 }
                 Message::Text(text) => {
+                    info!("Received WebSocket message: {}", text);
                     let client_msg: Result<WsClientMessage, _> = serde_json::from_str(&text);
                     if let Ok(msg) = client_msg {
                         if msg.r#type == "message" {
@@ -58,6 +64,7 @@ pub async fn ws_chat(
                                 id,
                                 pool_arc.clone(),
                                 llm_arc.clone(),
+                                config_arc.clone(),
                                 &mut session,
                             )
                             .await;
@@ -82,6 +89,7 @@ async fn handle_chat_message(
     session_id: Uuid,
     pool: DbPool,
     llm: Arc<dyn LlmProvider>,
+    config: Arc<crate::config::AppConfig>,
     session: &mut actix_ws::Session,
 ) {
     // 1. Save user message to database
@@ -106,7 +114,7 @@ async fn handle_chat_message(
         return;
     }
 
-    // 2. Fetch History
+    // 2. Fetch History & Session Metadata
     let history = match DbService::get_messages(&conn, session_id, 50, 0) {
         Ok(msgs) => msgs,
         Err(e) => {
@@ -114,6 +122,15 @@ async fn handle_chat_message(
             return;
         }
     };
+
+    let session_db = DbService::get_session(&conn, session_id).unwrap_or(None);
+    let mut system_prompt = config.chat.system_prompt.clone();
+
+    if let Some(s) = session_db {
+        if let Some(prompt) = s.metadata.get("system_prompt").and_then(|v| v.as_str()) {
+            system_prompt = prompt.to_string();
+        }
+    }
 
     let llm_messages: Vec<LlmMessage> = history
         .into_iter()
@@ -132,7 +149,10 @@ async fn handle_chat_message(
     
     // Spawn the network request payload in background so we can listen to the chunk rx channel
     tokio::spawn(async move {
-        let opts = ChatOptions::default();
+        let opts = ChatOptions {
+            system_prompt: Some(system_prompt),
+            ..Default::default()
+        };
         if let Err(e) = llm_clone.chat_streaming(&llm_messages, opts, tx).await {
             error!("LLM Streaming Error: {:?}", e);
         }
@@ -165,6 +185,7 @@ async fn handle_chat_message(
     let _ = session.text(serde_json::to_string(&done_msg).unwrap()).await;
 
     // 6. Save final assistant message to database
+    let token_count = (full_assistant_response.len() / 4).max(1) as i32;
     let conn = pool.lock().unwrap();
     let _ = DbService::insert_message(
         &conn,
@@ -172,7 +193,7 @@ async fn handle_chat_message(
         "assistant",
         &full_assistant_response,
         Some(llm.name()),
-        None,
+        Some(token_count),
         serde_json::json!({}),
     );
 }

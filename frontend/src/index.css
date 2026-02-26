@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme {
+  /* Gruvbox Dark Palette */
+  --color-gruv-dark-0: #1d2021;
+  --color-gruv-dark-1: #282828;
+  --color-gruv-dark-2: #32302f;
+  --color-gruv-dark-3: #3c3836;
+  --color-gruv-dark-4: #504945;
+
+  /* Gruvbox Light Palette */
+  --color-gruv-light-0: #fbf1c7;
+  --color-gruv-light-1: #ebdbb2;
+  --color-gruv-light-2: #d5c4a1;
+  --color-gruv-light-3: #bdae93;
+  --color-gruv-light-4: #a89984;
+
+  /* Monokai-Gruvbox Fusion Highlights */
+  --color-monokai-pink: #f92672;
+  --color-monokai-green: #a6e22e;
+  --color-monokai-aqua: #66d9ef;
+  --color-monokai-orange: #fd971f;
+  --color-monokai-purple: #ae81ff;
+
+  --color-gruv-yellow: #fabd2f;
+  --color-gruv-blue: #83a598;
+  --color-gruv-gray: #928374;
+
+  /* UI Tokens */
+  --color-bg-primary: var(--color-gruv-dark-1);
+  --color-bg-secondary: var(--color-gruv-dark-2);
+  --color-text-primary: var(--color-gruv-light-1);
+  --color-text-secondary: var(--color-gruv-light-4);
+  --color-accent: var(--color-monokai-pink);
+
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-bg-primary text-text-primary font-sans antialiased;
+  }
+
+  code, pre {
+    @apply font-mono;
+  }
+}
+
+/* Custom Utilities */
+@layer components {
+  .glass {
+    @apply bg-gruv-dark-2/40 backdrop-blur-md border border-gruv-dark-4/50;
+  }
+  
+  .btn-primary {
+    @apply bg-monokai-pink text-white px-6 py-2 rounded-lg font-semibold 
+           shadow-[0_0_15px_rgba(249,38,114,0.3)] hover:scale-105 
+           hover:shadow-[0_0_25px_rgba(249,38,114,0.5)] transition-all duration-300;
+  }
+
+  .btn-secondary {
+    @apply bg-gruv-dark-3 text-gruv-light-1 px-6 py-2 rounded-lg font-semibold 
+           border border-gruv-dark-4 hover:bg-gruv-dark-4 transition-all duration-300;
+  }
+}

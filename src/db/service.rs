@@ -1,6 +1,6 @@
 use crate::db::models::{Message, Session};
 use chrono::{DateTime, Utc};
-use duckdb::{params, Connection, Result as DbResult, Row};
+use duckdb::{params, params_from_iter, Connection, Result as DbResult, Row};
 use uuid::Uuid;
 
 pub struct DbService;
@@ -118,6 +118,45 @@ impl DbService {
         Ok(())
     }
 
+    pub fn update_session(
+        conn: &Connection, 
+        id: Uuid, 
+        name: Option<String>, 
+        metadata: Option<serde_json::Value>
+    ) -> DbResult<Option<Session>> {
+        let mut updates = Vec::new();
+        let mut params_vec: Vec<Box<dyn duckdb::ToSql>> = Vec::new();
+
+        if let Some(n) = name {
+            updates.push("name = ?");
+            params_vec.push(Box::new(n));
+        }
+
+        if let Some(m) = metadata {
+            updates.push("metadata = ?");
+            params_vec.push(Box::new(m.to_string()));
+        }
+
+        if updates.is_empty() {
+            return Self::get_session(conn, id);
+        }
+
+        updates.push("updated_at = CURRENT_TIMESTAMP");
+        
+        let sql = format!(
+            "UPDATE sessions SET {} WHERE id = ?",
+            updates.join(", ")
+        );
+        params_vec.push(Box::new(id.to_string()));
+
+        // Convert Vec<Box<dyn ToSql>> to a slice of &dyn ToSql
+        let params_refs: Vec<&dyn duckdb::ToSql> = params_vec.iter().map(|b| b.as_ref()).collect();
+
+        conn.execute(&sql, params_from_iter(params_refs))?;
+        
+        Self::get_session(conn, id)
+    }
+
     // --- Message Operations ---
 
     pub fn insert_message(
@@ -171,5 +210,22 @@ impl DbService {
             messages.push(row?);
         }
         Ok(messages)
+    }
+
+    pub fn get_stats(conn: &Connection, db_path: &str) -> DbResult<crate::api::models::SystemStats> {
+        let total_sessions: i64 = conn.query_row("SELECT count(*) FROM sessions", [], |r| r.get(0))?;
+        let total_messages: i64 = conn.query_row("SELECT count(*) FROM messages", [], |r| r.get(0))?;
+        let total_tokens: i64 = conn.query_row("SELECT coalesce(sum(token_count), 0) FROM messages", [], |r| r.get(0))?;
+        
+        let db_size_bytes = std::fs::metadata(db_path)
+            .map(|m| m.len())
+            .unwrap_or(0);
+
+        Ok(crate::api::models::SystemStats {
+            total_sessions,
+            total_messages,
+            total_tokens,
+            db_size_bytes,
+        })
     }
 }

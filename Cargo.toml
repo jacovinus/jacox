@@ -1,10 +1,13 @@
+[package]
 name = "jacox"
 version = "0.1.0"
 edition = "2021"
 license = "GPL-3.0"
 
 [dependencies]
+actix-files = "0.6"
 actix-web = "4"
+actix-cors = "0.7"
 actix-ws = "0.2"
 tokio = { version = "1", features = ["full"] }
 duckdb = { version = "1.1", features = ["bundled"] }

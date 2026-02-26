@@ -98,11 +98,13 @@ Require `Authorization: Bearer <api_key>` header for all endpoints except `/heal
 | `GET` | `/health` | Health check |
 | `POST` | `/sessions` | Create session |
 | `GET` | `/sessions` | List sessions |
-| `GET` | `/sessions/:id` | Get details |
+| `GET` | `/sessions/:id` | Get session details |
+| `PATCH` | `/sessions/:id` | Update session (name, metadata) |
 | `DELETE` | `/sessions/:id` | Delete session |
 | `GET` | `/sessions/:id/messages` | Get history |
 | `GET` | `/sessions/:id/export` | Export as .txt |
 | `POST` | `/sessions/import` | Import from .txt |
+| `GET` | `/api/stats` | System-wide statistics |
 | `POST` | `/v1/chat/completions` | OpenAI compatible API |
 
 ### WebSocket
@@ -126,6 +128,24 @@ pub trait LlmProvider: Send + Sync {
     fn supported_models(&self) -> Vec<&str>;
 }
 ```
+
+## Frontend Features
+
+The project includes a modern React-based admin dashboard and chat interface with the following capabilities:
+
+### Rich Chat Interface
+- **Markdown Rendering**: Full GitHub Flavored Markdown support.
+- **Syntax Highlighting**: Code blocks with language detection and premium themes.
+- **Table Support**: Formatted markdown tables with responsive scrolling.
+- **Image/SVG Rendering**: Support for inline images from URLs and **Live SVG Preview** for code blocks.
+- **Raw/Formatted Toggle**: Instantly switch between rendered markdown and raw plain text.
+- **Dynamic Personalities**: Override system prompts per session via JSON metadata.
+
+### Dashboard Statistics
+- **Tokens Tracking**: Real-time estimation and reporting of token usage.
+- **Byte-Perfect Storage**: Accurate DB size monitoring and display.
+- **Smart Formatting**: K/M suffixes for high-volume metrics.
+- **Health Checks**: Live status indicators for API and Database connectivity.
 
 ## Project Structure
 
