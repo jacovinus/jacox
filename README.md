@@ -2,6 +2,8 @@
 
 **Jacox** is a premium, local-first LLM orchestration platform built with a **Rust** backbone and **DuckDB** intelligence. It’s designed for developers who demand speed, security, and a beautiful interface for their AI workflows.
 
+![Dashboard Overview](static/screenshots/dashboard.png)
+
 ---
 
 ## 🎨 A World-Class Aesthetic
@@ -11,6 +13,8 @@ Jacox isn't just a server; it's a sleek, dark-mode experience inspired by the **
 - **Dynamic Graphics**: Render **Live SVGs** directly in the chat—designed for instant visualization.
 - **Micro-animations**: A fluid, responsive interface that feels alive.
 - **Raw/Formatted Toggles**: Deep-dive into LLM outputs with instant view switching.
+
+![Chat in Action](static/screenshots/chat.png)
 
 ## ⚡ Technical Excellence
 - **Rust Core**: Blazing fast, memory-safe execution using Actix-web.
@@ -56,6 +60,8 @@ The built-in dashboard provides a "God-view" of your AI infrastructure:
 
 ### 💻 Developer Hub (Playground)
 A full-featured modern React app for managing sessions, editing raw JSON metadata, and overriding system personalities on the fly.
+
+![Metadata Editor](static/screenshots/metadata.png)
 
 ### 🔌 OpenAI Compatible Proxy
 Drop Jacox into any existing OpenAI-ready application. Just point your base URL to `http://localhost:8080/v1`.
