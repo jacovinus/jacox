@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::llm::models::{ToolCall, ToolDefinition};
 
 #[derive(Debug, Deserialize)]
 pub struct OpenAIChatRequest {
@@ -7,12 +8,18 @@ pub struct OpenAIChatRequest {
     pub temperature: Option<f32>,
     pub max_tokens: Option<u32>,
     pub stream: Option<bool>,
+    pub tools: Option<Vec<ToolDefinition>>,
+    pub tool_choice: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OpenAIMessage {
     pub role: String,
     pub content: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tool_calls: Option<Vec<ToolCall>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tool_call_id: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -30,7 +37,7 @@ pub struct OpenAIChatResponse {
 pub struct OpenAIChoice {
     pub index: u32,
     pub message: OpenAIMessage,
-    pub finish_reason: String,
+    pub finish_reason: Option<String>,
 }
 
 #[derive(Debug, Serialize)]

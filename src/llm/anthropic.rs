@@ -102,6 +102,7 @@ impl LlmProvider for AnthropicProvider {
             content,
             model: model.to_string(),
             usage,
+            tool_calls: None,
         })
     }
 

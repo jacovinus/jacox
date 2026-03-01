@@ -18,7 +18,6 @@ export const Chat = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const queryClient = useQueryClient();
 
-    // ... existing queries ...
     const { data: sessions, isLoading: sessionsLoading } = useQuery({
         queryKey: ['sessions'],
         queryFn: () => sessionsApi.list()
@@ -37,9 +36,12 @@ export const Chat = () => {
         messages,
         setMessages,
         isStreaming,
+        isWaiting,
+        status,
         error: chatError,
         connect,
-        sendMessage
+        sendMessage,
+        cancel
     } = useChatStream(activeSessionId);
 
     // Auto-connect when session ID changes
@@ -59,7 +61,7 @@ export const Chat = () => {
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+    }, [messages, isWaiting]);
 
     // Mutations
     const updateSession = useMutation({
@@ -73,7 +75,6 @@ export const Chat = () => {
     });
 
     const createSession = useMutation({
-        // ...
         mutationFn: (name: string) => sessionsApi.create({ name }),
         onSuccess: (newSession) => {
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
@@ -105,7 +106,7 @@ export const Chat = () => {
 
     return (
         <div className="flex h-[calc(100vh-140px)] gap-6">
-            {/* Session List Sidebar (Local to Chat) */}
+            {/* Session List Sidebar */}
             <div className="w-64 shrink-0 glass rounded-2xl flex flex-col overflow-hidden">
                 <div className="p-4 border-b border-gruv-dark-4/20">
                     <button
@@ -242,6 +243,33 @@ export const Chat = () => {
                                     </div>
                                 </div>
                             ))}
+
+                            {(isWaiting || isStreaming) && (
+                                <div className="flex gap-4 max-w-[85%] self-start animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                    <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-monokai-aqua/10 border border-monokai-aqua/20 shadow-sm border-dashed animate-pulse">
+                                        <Loader2 className="w-5 h-5 text-monokai-aqua animate-spin" />
+                                    </div>
+                                    <div className="p-4 rounded-2xl text-sm leading-relaxed bg-gruv-dark-2/30 border border-gruv-dark-4/20 flex flex-col gap-3 shadow-inner min-w-[120px]">
+                                        <div className="flex items-center justify-between gap-4">
+                                            <span className="text-monokai-aqua font-mono text-[10px] uppercase tracking-widest font-bold">
+                                                {status || (isStreaming ? 'Streaming...' : 'Thinking...')}
+                                            </span>
+                                            <button
+                                                onClick={cancel}
+                                                className="p-1 hover:bg-monokai-red/20 rounded-md transition-colors text-gruv-light-4 hover:text-monokai-red group/cancel"
+                                                title="Cancel Process"
+                                            >
+                                                <X className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                        <div className="flex gap-1.5">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-monokai-aqua opacity-40 animate-bounce [animation-delay:-0.3s]" />
+                                            <span className="w-1.5 h-1.5 rounded-full bg-monokai-aqua opacity-60 animate-bounce [animation-delay:-0.15s]" />
+                                            <span className="w-1.5 h-1.5 rounded-full bg-monokai-aqua animate-bounce" />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                             <div ref={messagesEndRef} />
                         </div>
 
@@ -251,7 +279,7 @@ export const Chat = () => {
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
-                                    placeholder="Type a message... (Enter to send, Shift+Enter for new line)"
+                                    placeholder="Type a message..."
                                     className="w-full bg-gruv-dark-3 border border-gruv-dark-4 text-gruv-light-1 rounded-2xl py-4 pl-4 pr-16 focus:outline-none focus:border-monokai-pink transition-colors resize-none h-16 min-h-[64px]"
                                 />
                                 <button
@@ -267,7 +295,7 @@ export const Chat = () => {
                 )}
             </div>
 
-            {/* Metadata Editor Modal */}
+            {/* Metadata Modal */}
             {isMetadataModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                     <div className="w-full max-w-2xl glass rounded-3xl overflow-hidden shadow-2xl border border-gruv-dark-4/30">
@@ -281,7 +309,6 @@ export const Chat = () => {
                             </button>
                         </div>
                         <div className="p-6">
-                            <p className="text-xs text-gruv-light-4 mb-4">Edit raw JSON metadata for this conversation. Useful for setting context or tags.</p>
                             <textarea
                                 value={metadataValue}
                                 onChange={(e) => setMetadataValue(e.target.value)}
@@ -290,19 +317,14 @@ export const Chat = () => {
                             />
                         </div>
                         <div className="p-6 border-t border-gruv-dark-4/20 flex justify-end gap-3 bg-gruv-dark-2/30">
-                            <button
-                                onClick={() => setIsMetadataModalOpen(false)}
-                                className="px-5 py-2 hover:bg-gruv-dark-4 rounded-xl transition-colors text-sm font-semibold"
-                            >
-                                Cancel
-                            </button>
+                            <button onClick={() => setIsMetadataModalOpen(false)} className="px-5 py-2 hover:bg-gruv-dark-4 rounded-xl transition-colors text-sm font-semibold">Cancel</button>
                             <button
                                 onClick={() => {
                                     try {
                                         const metadata = JSON.parse(metadataValue);
                                         updateSession.mutate({ id: activeSessionId!, metadata });
                                     } catch (e) {
-                                        alert('Invalid JSON format');
+                                        alert('Invalid JSON');
                                     }
                                 }}
                                 className="btn-primary px-5 py-2 text-sm"

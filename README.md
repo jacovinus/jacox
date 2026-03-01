@@ -10,9 +10,11 @@
 Jacox isn't just a server; it's a sleek, dark-mode experience inspired by the **Monokai-Gruvbox** palette. 
 
 - **Rich Markdown Rendering**: Full GFM support with optimized syntax highlighting.
+- **High-Fidelity Charts**: Render interactive **Line** and **Bar** charts with sub-micro granularity and tooltips—perfect for financial or temporal data.
 - **Dynamic Graphics**: Render **Live SVGs** directly in the chat—designed for instant visualization.
-- **Micro-animations**: A fluid, responsive interface that feels alive.
+- **Micro-animations**: A fluid, responsive interface that feels alive with real-time **Thinking & Searching** status indicators.
 - **Raw/Formatted Toggles**: Deep-dive into LLM outputs with instant view switching.
+- **Process Cancellation**: Instantly stop any long-running generation or search with a single click.
 
 ![Chat in Action](static/screenshots/chat.png)
 
@@ -20,6 +22,7 @@ Jacox isn't just a server; it's a sleek, dark-mode experience inspired by the **
 - **Rust Core**: Blazing fast, memory-safe execution using Actix-web.
 - **DuckDB Storage**: Analytical conversation memory in a single file (`chat.db`).
 - **Pluggable Intelligence**: Seamlessly switch between **OpenAI**, **Anthropic**, and **Ollama**.
+- **Internet Search**: Built-in scraper tool that allows models to fetch real-world data without external API keys.
 - **Real-Time Dashboard**: Monitor tokens, messages, and storage with high-fidelity telemetry.
 
 ---

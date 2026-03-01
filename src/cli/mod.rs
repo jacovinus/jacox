@@ -171,6 +171,8 @@ async fn run_repl(session_id: Uuid, config: AppConfig) {
         let llm_messages: Vec<LlmMessage> = history.into_iter().map(|m| LlmMessage {
             role: m.role,
             content: m.content,
+            tool_calls: None,
+            tool_call_id: None,
         }).collect();
         
         let (tx, mut rx) = mpsc::channel::<String>(100);
