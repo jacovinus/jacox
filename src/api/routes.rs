@@ -118,41 +118,122 @@ pub async fn add_message(
         Err(e) => return Ok(HttpResponse::InternalServerError().body(e.to_string())),
     };
 
-    let llm_messages: Vec<LlmMessage> = history.into_iter().map(|m| LlmMessage {
-        role: m.role,
-        content: m.content,
+    let mut llm_messages: Vec<LlmMessage> = history.into_iter().map(|m| {
+        let tool_calls = m.metadata.get("tool_calls").and_then(|tc| serde_json::from_value(tc.clone()).ok());
+        let tool_call_id = m.metadata.get("tool_call_id").and_then(|tid| tid.as_str().map(|s| s.to_string()));
+        LlmMessage {
+            role: m.role,
+            content: m.content,
+            tool_calls,
+            tool_call_id,
+        }
     }).collect();
 
-    // Drop the DuckDB connection lock so we don't block other threads during the slow LLM network boundary
+    // Drop the DuckDB connection lock
     drop(conn);
 
-    let chat_options = ChatOptions {
+    let tools = crate::tools::ToolRegistry::new();
+    let current_date = chrono::Local::now().format("%A, %B %d, %Y").to_string();
+    let system_prompt = config.chat.system_prompt.replace("{current_date}", &current_date);
+    let grounded_prompt = format!("Current Date: {}.\n\n{}", current_date, system_prompt);
+    
+    let current_options = ChatOptions {
         model: req.model,
-        system_prompt: Some(config.chat.system_prompt.clone()),
+        system_prompt: Some(grounded_prompt),
+        tools: Some(tools.get_definitions()),
         ..Default::default()
     };
 
-    let response = match llm.chat(&llm_messages, chat_options).await {
-        Ok(res) => res,
-        Err(e) => return Ok(HttpResponse::InternalServerError().body(format!("LLM Error: {}", e))),
-    };
+    let mut loop_count = 0;
+    let max_loops = 5;
 
-    // Re-lock the DB pool to insert the assistant's context
-    let conn = pool.lock().unwrap();
-    let token_count = response.usage.map(|u| u.input_tokens + u.output_tokens).map(|t| t as i32);
+    while loop_count < max_loops {
+        let response = match llm.chat(&llm_messages, current_options.clone()).await {
+            Ok(res) => res,
+            Err(e) => return Ok(HttpResponse::InternalServerError().body(format!("LLM Error: {}", e))),
+        };
 
-    match DbService::insert_message(
-        &conn,
-        id,
-        "assistant",
-        &response.content,
-        Some(&response.model),
-        token_count,
-        serde_json::json!({}),
-    ) {
-        Ok(assistant_msg) => Ok(HttpResponse::Created().json(assistant_msg)),
-        Err(e) => Ok(HttpResponse::InternalServerError().body(e.to_string())),
+        // If no tool calls, we're done
+        if response.tool_calls.as_ref().map(|tc| tc.is_empty()).unwrap_or(true) {
+            // Re-lock the DB pool to insert the assistant's context
+            let conn = pool.lock().unwrap();
+            let token_count = response.usage.as_ref().map(|u| u.input_tokens + u.output_tokens).map(|t| t as i32);
+
+            return match DbService::insert_message(
+                &conn,
+                id,
+                "assistant",
+                &response.content,
+                Some(&response.model),
+                token_count,
+                serde_json::json!({}),
+            ) {
+                Ok(assistant_msg) => Ok(HttpResponse::Created().json(assistant_msg)),
+                Err(e) => Ok(HttpResponse::InternalServerError().body(e.to_string())),
+            };
+        }
+
+        // Handle tool calls
+        let mut assistant_tool_calls = Vec::new();
+        let tool_calls = response.tool_calls.unwrap();
+        
+        for tool_call in &tool_calls {
+            assistant_tool_calls.push(tool_call.clone());
+        }
+
+        // 1. Add assistant message with tool calls to history
+        llm_messages.push(LlmMessage {
+            role: "assistant".to_string(),
+            content: response.content.clone(),
+            tool_calls: Some(assistant_tool_calls.clone()),
+            tool_call_id: None,
+        });
+
+        // 2. Persist assistant message (optional but good for history)
+        {
+            let conn = pool.lock().unwrap();
+            let _ = DbService::insert_message(
+                &conn,
+                id,
+                "assistant",
+                &response.content,
+                Some(&response.model),
+                None, // We'll count tokens at the end or skip here
+                serde_json::json!({ "tool_calls": assistant_tool_calls }),
+            );
+        }
+
+        // 3. Execute tools
+        for tool_call in tool_calls {
+            let tool_id = tool_call.id.clone().unwrap_or_else(|| Uuid::new_v4().to_string());
+            let result = tools.call_tool(&tool_call.function.name, &tool_call.function.arguments).await;
+            
+            llm_messages.push(LlmMessage {
+                role: "tool".to_string(),
+                content: result.clone(),
+                tool_calls: None,
+                tool_call_id: Some(tool_id.clone()),
+            });
+
+            // Re-lock the DB pool to insert the tool result
+            {
+                let conn = pool.lock().unwrap();
+                let _ = DbService::insert_message(
+                    &conn,
+                    id,
+                    "tool",
+                    &result,
+                    None,
+                    None,
+                    serde_json::json!({ "tool_call_id": tool_id }),
+                );
+            }
+        }
+
+        loop_count += 1;
     }
+
+    Ok(HttpResponse::InternalServerError().body("Max tool call loops reached"))
 }
 
 #[get("/{id}/messages")]

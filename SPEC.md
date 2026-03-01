@@ -114,8 +114,14 @@ Require `Authorization: Bearer <api_key>` header for all endpoints except `/heal
 | `/ws/chat/:session_id` | Real-time streaming |
 
 **WS Frame Format:**
-- Client: `{ "type": "message", "content": "hello" }`
-- Server: `{ "type": "chunk", "content": ".." }` -> `{ "type": "done" }`
+- Client: 
+    - `{ "type": "message", "content": "hello" }`
+    - `{ "type": "cancel" }` - Aborts the active generation/tool task.
+- Server: 
+    - `{ "type": "chunk", "content": ".." }` -> Streaming content.
+    - `{ "type": "status", "content": "Searching..." }` -> UI status pulse.
+    - `{ "type": "done" }` -> End of response.
+    - `{ "type": "error", "content": "..." }`
 
 ## LLM Provider Trait
 
@@ -138,6 +144,9 @@ The project includes a modern React-based admin dashboard and chat interface wit
 - **Syntax Highlighting**: Code blocks with language detection and premium themes.
 - **Table Support**: Formatted markdown tables with responsive scrolling.
 - **Image/SVG Rendering**: Support for inline images from URLs and **Live SVG Preview** for code blocks.
+- **Interactive Charts**: Responsive Bar/Line charts with "bucketed" high-resolution data support.
+- **Thinking Indicators**: Real-time feedback for searching and processing states.
+- **Process Control**: Ability to cancel long-running tasks via the UI.
 - **Raw/Formatted Toggle**: Instantly switch between rendered markdown and raw plain text.
 - **Dynamic Personalities**: Override system prompts per session via JSON metadata.
 

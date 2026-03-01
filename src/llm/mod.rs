@@ -41,6 +41,10 @@ pub trait LlmProvider: Send + Sync {
     ) -> Result<(), LlmError>;
     
     fn supported_models(&self) -> Vec<&str>;
+
+    fn tools(&self) -> Vec<models::ToolDefinition> {
+        vec![]
+    }
 }
 
 /// A registry or factory trait to initialize providers from config.

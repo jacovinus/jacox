@@ -4,6 +4,8 @@ import type { WsServerMessage, WsClientMessage, Message } from '../types';
 export const useChatStream = (sessionId: string | null) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isWaiting, setIsWaiting] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const streamBufferRef = useRef<string>("");
@@ -41,6 +43,8 @@ export const useChatStream = (sessionId: string | null) => {
 
       if (data.type === 'chunk') {
         setIsStreaming(true);
+        setIsWaiting(false);
+        setStatus(null);
         streamBufferRef.current += data.content;
         
         // Update the last assistant message in state or add a temporary one
@@ -67,12 +71,19 @@ export const useChatStream = (sessionId: string | null) => {
             ];
           }
         });
+      } else if (data.type === 'status') {
+        setIsWaiting(true);
+        setStatus(data.content);
       } else if (data.type === 'done') {
         setIsStreaming(false);
+        setIsWaiting(false);
+        setStatus(null);
         streamBufferRef.current = "";
       } else if (data.type === 'error') {
         setError(data.content);
         setIsStreaming(false);
+        setIsWaiting(false);
+        setStatus(null);
       }
     };
 
@@ -92,6 +103,9 @@ export const useChatStream = (sessionId: string | null) => {
       setError('Not connected');
       return;
     }
+
+    setIsWaiting(true);
+    setStatus('Thinking...');
 
     const clientMsg: WsClientMessage = {
       type: 'message',
@@ -117,6 +131,19 @@ export const useChatStream = (sessionId: string | null) => {
     wsRef.current.send(JSON.stringify(clientMsg));
   }, [sessionId]);
 
+  const cancel = useCallback(() => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      const cancelMsg: WsClientMessage = {
+        type: 'cancel' as any,
+        content: ''
+      };
+      wsRef.current.send(JSON.stringify(cancelMsg));
+    }
+    setIsStreaming(false);
+    setIsWaiting(false);
+    setStatus(null);
+  }, []);
+
   useEffect(() => {
     return () => {
       if (wsRef.current) wsRef.current.close();
@@ -127,8 +154,11 @@ export const useChatStream = (sessionId: string | null) => {
     messages,
     setMessages,
     isStreaming,
+    isWaiting,
+    status,
     error,
     connect,
-    sendMessage
+    sendMessage,
+    cancel
   };
 };

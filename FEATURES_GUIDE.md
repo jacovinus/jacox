@@ -105,3 +105,37 @@ Visit `http://localhost:8080/playground` to see the live chat interface.
 
 ### 🎯 Use Case: Model Benchmarking
 Quickly switch models in `config.yaml` and test how they handle the same prompts side-by-side using the Playground UI.
+
+---
+
+## 7. Internet Search Tool 🌐
+Jacox includes a built-in search tool that uses a custom Rust scraper to fetch grounding data from the web. This allows local models (like Mistral via Ollama) to answer questions about current events.
+
+### 🛠 Example Prompt
+"What is the current price of Bitcoin in Euros?"
+-> The agent will trigger a `Searching: internet_search...` status and fetch live data.
+
+### 🎯 Use Case: Real-time Grounding
+Give your local models access to the "today" without needing a search API subscription (like Brave or Google).
+
+---
+
+## 8. High-Fidelity Data Visualization (Charts) 📊
+If an LLM provides a JSON block with `role: "chart"`, Jacox will render it as a premium Recharts visualization.
+
+### 🛠 JSON Format
+```json
+{
+  "role": "chart",
+  "type": "line",
+  "title": "Bitcoin Trend",
+  "data": [
+    { "label": "Monday", "values": [50000, 51000, 52000], "subLabels": ["00:00", "08:00", "16:00"] }
+  ],
+  "xAxis": "label",
+  "yAxis": "value"
+}
+```
+
+### 🎯 Use Case: Financial Analysis
+Visualize stock trends, crypto prices, or server telemetry directly in the chat interface with interactive tooltips and granular data buckets.

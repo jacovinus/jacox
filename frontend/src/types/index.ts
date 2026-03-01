@@ -36,7 +36,7 @@ export interface CreateMessageRequest {
 }
 
 export interface WsServerMessage {
-  type: 'chunk' | 'done' | 'error';
+  type: 'chunk' | 'done' | 'error' | 'status';
   content: string;
 }
 

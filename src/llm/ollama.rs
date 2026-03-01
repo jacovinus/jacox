@@ -3,7 +3,7 @@ use reqwest::Client;
 use serde_json::json;
 use tokio::sync::mpsc::Sender;
 
-use crate::llm::{models::{ChatOptions, ChatResponse, Message}, LlmError, LlmProvider};
+use crate::llm::{models::{ChatOptions, ChatResponse, Message, ToolCall, FunctionCall}, LlmError, LlmProvider};
 
 pub struct OllamaProvider {
     client: Client,
@@ -35,10 +35,12 @@ impl LlmProvider for OllamaProvider {
             final_messages.insert(0, Message {
                 role: "system".to_string(),
                 content: system.clone(),
+                tool_calls: None,
+                tool_call_id: None,
             });
         }
 
-        let body = json!({
+        let mut body = json!({
             "model": model,
             "messages": final_messages,
             "stream": false,
@@ -47,6 +49,10 @@ impl LlmProvider for OllamaProvider {
                 "num_predict": options.max_tokens.unwrap_or(4096)
             }
         });
+
+        if let Some(tools) = &options.tools {
+            body["tools"] = json!(tools);
+        }
 
         let response = self
             .client
@@ -67,15 +73,71 @@ impl LlmProvider for OllamaProvider {
             .await
             .map_err(|e| LlmError::Network(e.to_string()))?;
 
-        let content = json["message"]["content"]
+        let message = &json["message"];
+        let mut content = message["content"]
             .as_str()
-            .ok_or(LlmError::InvalidRequest)?
+            .unwrap_or_default()
             .to_string();
+
+        let mut tool_calls: Option<Vec<ToolCall>> = message.get("tool_calls")
+            .and_then(|tc| serde_json::from_value(tc.clone()).ok());
+
+        // Fallback: If no tool_calls, try to find JSON tool calls in the content string
+        if tool_calls.as_ref().map(|tc| tc.is_empty()).unwrap_or(true) {
+            // Find the start of a potential JSON array
+            if let Some(start_pos) = content.find('[') {
+                let json_part = &content[start_pos..];
+                
+                // Try to find the matching closing bracket for the array
+                let mut bracket_count = 0;
+                let mut end_pos = None;
+                for (i, c) in json_part.chars().enumerate() {
+                    if c == '[' { bracket_count += 1; }
+                    else if c == ']' {
+                        bracket_count -= 1;
+                        if bracket_count == 0 {
+                            end_pos = Some(i + 1);
+                            break;
+                        }
+                    }
+                }
+
+                if let Some(len) = end_pos {
+                    let potential_json = &json_part[..len];
+                    if let Ok(parsed_functions) = serde_json::from_str::<Vec<serde_json::Value>>(potential_json) {
+                        let mapped_tools: Vec<ToolCall> = parsed_functions.into_iter().filter_map(|f| {
+                            // High flexibility: handle both ToolCall wrapper and direct function object
+                            let func_obj = if f.get("function").is_some() { &f["function"] } else { &f };
+                            
+                            let name = func_obj["name"].as_str()?.to_string();
+                            let args = if func_obj["arguments"].is_string() {
+                                func_obj["arguments"].as_str()?.to_string()
+                            } else {
+                                func_obj["arguments"].to_string()
+                            };
+                            
+                            Some(ToolCall {
+                                id: f["id"].as_str().map(|s| s.to_string()),
+                                r#type: Some("function".to_string()),
+                                function: FunctionCall { name, arguments: args },
+                            })
+                        }).collect();
+                        
+                        if !mapped_tools.is_empty() {
+                            tool_calls = Some(mapped_tools);
+                            // Keep text before the JSON, discarding the JSON and anything after it
+                            content = content[..start_pos].trim().to_string();
+                        }
+                    }
+                }
+            }
+        }
 
         Ok(ChatResponse {
             content,
             model: model.to_string(),
             usage: None,
+            tool_calls,
         })
     }
 
@@ -92,10 +154,12 @@ impl LlmProvider for OllamaProvider {
             final_messages.insert(0, Message {
                 role: "system".to_string(),
                 content: system.clone(),
+                tool_calls: None,
+                tool_call_id: None,
             });
         }
 
-        let body = json!({
+        let mut body = json!({
             "model": model,
             "messages": final_messages,
             "stream": true,
@@ -104,6 +168,10 @@ impl LlmProvider for OllamaProvider {
                 "num_predict": options.max_tokens.unwrap_or(4096)
             }
         });
+
+        if let Some(tools) = &options.tools {
+            body["tools"] = json!(tools);
+        }
 
         let response = self
             .client

@@ -3,7 +3,7 @@ use reqwest::Client;
 use serde_json::json;
 use tokio::sync::mpsc::Sender;
 
-use crate::llm::{models::{ChatOptions, ChatResponse, Message, Usage}, LlmError, LlmProvider};
+use crate::llm::{models::{ChatOptions, ChatResponse, Message, Usage, ToolCall}, LlmError, LlmProvider};
 
 pub struct OpenAiProvider {
     client: Client,
@@ -37,15 +37,24 @@ impl LlmProvider for OpenAiProvider {
             final_messages.insert(0, Message {
                 role: "system".to_string(),
                 content: system.clone(),
+                tool_calls: None,
+                tool_call_id: None,
             });
         }
 
-        let body = json!({
+        let mut body = json!({
             "model": model,
             "messages": final_messages,
             "temperature": options.temperature.unwrap_or(0.7),
             "max_tokens": options.max_tokens.unwrap_or(4096),
         });
+
+        if let Some(tools) = &options.tools {
+            body["tools"] = json!(tools);
+        }
+        if let Some(choice) = &options.tool_choice {
+            body["tool_choice"] = json!(choice);
+        }
 
         let response = self
             .client
@@ -71,10 +80,14 @@ impl LlmProvider for OpenAiProvider {
             .await
             .map_err(|e| LlmError::Network(e.to_string()))?;
 
-        let content = json["choices"][0]["message"]["content"]
+        let message = &json["choices"][0]["message"];
+        let content = message["content"]
             .as_str()
-            .ok_or(LlmError::InvalidRequest)?
+            .unwrap_or_default()
             .to_string();
+
+        let tool_calls: Option<Vec<ToolCall>> = message.get("tool_calls")
+            .and_then(|tc| serde_json::from_value(tc.clone()).ok());
 
         let usage = if let Some(u) = json.get("usage") {
             Some(Usage {
@@ -89,6 +102,7 @@ impl LlmProvider for OpenAiProvider {
             content,
             model: model.to_string(),
             usage,
+            tool_calls,
         })
     }
 
@@ -105,16 +119,25 @@ impl LlmProvider for OpenAiProvider {
             final_messages.insert(0, Message {
                 role: "system".to_string(),
                 content: system.clone(),
+                tool_calls: None,
+                tool_call_id: None,
             });
         }
 
-        let body = json!({
+        let mut body = json!({
             "model": model,
             "messages": final_messages,
             "stream": true,
             "temperature": options.temperature.unwrap_or(0.7),
             "max_tokens": options.max_tokens.unwrap_or(4096),
         });
+
+        if let Some(tools) = &options.tools {
+            body["tools"] = json!(tools);
+        }
+        if let Some(choice) = &options.tool_choice {
+            body["tool_choice"] = json!(choice);
+        }
 
         let response = self
             .client
