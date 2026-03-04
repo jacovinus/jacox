@@ -1,4 +1,4 @@
-use crate::db::models::{Message, Session};
+use crate::db::models::{Message, Session, ToolResult};
 use chrono::{DateTime, Utc};
 use duckdb::{params, params_from_iter, Connection, Result as DbResult, Row};
 use uuid::Uuid;
@@ -212,6 +212,44 @@ impl DbService {
         Ok(messages)
     }
 
+    // --- Tool Result Operations ---
+
+    pub fn insert_tool_result(
+        conn: &Connection,
+        session_id: Uuid,
+        source_url: &str,
+        content: &str,
+    ) -> DbResult<ToolResult> {
+        conn.execute(
+            "INSERT INTO tool_results (session_id, source_url, content) VALUES (?, ?, ?)",
+            params![session_id.to_string(), source_url, content],
+        )?;
+
+        let mut stmt = conn.prepare(
+            "SELECT id, session_id, source_url, content, CAST(created_at AS VARCHAR) 
+             FROM tool_results 
+             WHERE session_id = ? 
+             ORDER BY id DESC LIMIT 1"
+        )?;
+        let mut rows = stmt.query_map(params![session_id.to_string()], Self::row_to_tool_result)?;
+        
+        Ok(rows.next().unwrap()?)
+    }
+
+    pub fn get_tool_result(conn: &Connection, id: i64) -> DbResult<Option<ToolResult>> {
+        let mut stmt = conn.prepare(
+            "SELECT id, session_id, source_url, content, CAST(created_at AS VARCHAR) 
+             FROM tool_results WHERE id = ?"
+        )?;
+        let mut rows = stmt.query_map(params![id], Self::row_to_tool_result)?;
+        
+        if let Some(row) = rows.next() {
+            Ok(Some(row?))
+        } else {
+            Ok(None)
+        }
+    }
+
     pub fn get_stats(conn: &Connection, db_path: &str) -> DbResult<crate::api::models::SystemStats> {
         let total_sessions: i64 = conn.query_row("SELECT count(*) FROM sessions", [], |r| r.get(0))?;
         let total_messages: i64 = conn.query_row("SELECT count(*) FROM messages", [], |r| r.get(0))?;
@@ -221,11 +259,49 @@ impl DbService {
             .map(|m| m.len())
             .unwrap_or(0);
 
+        let mut stmt = conn.prepare("SELECT tag, memory_usage_bytes FROM duckdb_memory()")?;
+        let memory_usage = stmt.query_map([], |r| {
+            Ok(crate::api::models::MemoryUsageEntry {
+                tag: r.get(0)?,
+                usage_bytes: r.get(1)?,
+            })
+        })?.collect::<DbResult<Vec<_>>>()?;
+
         Ok(crate::api::models::SystemStats {
             total_sessions,
             total_messages,
             total_tokens,
             db_size_bytes,
+            memory_usage,
         })
+    }
+
+    fn row_to_tool_result(row: &Row) -> DbResult<ToolResult> {
+        let created_val: duckdb::types::Value = row.get(4)?;
+        let created_str = match created_val {
+            duckdb::types::Value::Text(s) => s,
+            _ => String::new(),
+        };
+        let created_at = created_str.parse::<DateTime<Utc>>().unwrap_or_else(|_| Utc::now());
+
+        Ok(ToolResult {
+            id: row.get(0)?,
+            session_id: row.get::<_, String>(1)?.parse().unwrap_or_default(),
+            source_url: row.get::<_, String>(2)?,
+            content: row.get::<_, String>(3)?,
+            created_at,
+        })
+    }
+
+    pub fn purge_database(conn: &Connection) -> DbResult<()> {
+        conn.execute_batch("
+            DROP TABLE IF EXISTS messages;
+            DROP TABLE IF EXISTS tool_results;
+            DROP TABLE IF EXISTS sessions;
+            DROP SEQUENCE IF EXISTS seq_messages_id;
+            DROP SEQUENCE IF EXISTS seq_tool_results_id;
+        ")?;
+        
+        conn.execute_batch(crate::db::connection::SCHEMA)
     }
 }

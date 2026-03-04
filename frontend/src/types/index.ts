@@ -41,18 +41,26 @@ export interface WsServerMessage {
 }
 
 export interface WsClientMessage {
-  type: 'message';
+  type: 'message' | 'cancel';
   content: string;
   stream?: boolean;
+  search?: boolean;
+  reason?: boolean;
 }
 
 export interface PaginationQuery {
   limit?: number;
   offset?: number;
 }
+export interface MemoryUsageEntry {
+  tag: string;
+  usage_bytes: number;
+}
+
 export interface SystemStats {
   total_sessions: number;
   total_messages: number;
   total_tokens: number;
   db_size_bytes: number;
+  memory_usage: MemoryUsageEntry[];
 }

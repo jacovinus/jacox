@@ -35,6 +35,17 @@ pub async fn list_sessions(
     }
 }
 
+#[delete("")]
+pub async fn purge_all_sessions(
+    pool: web::Data<DbPool>,
+) -> WebResult<HttpResponse> {
+    let conn = pool.lock().unwrap();
+    match DbService::purge_database(&conn) {
+        Ok(_) => Ok(HttpResponse::NoContent().finish()),
+        Err(e) => Ok(HttpResponse::InternalServerError().body(e.to_string())),
+    }
+}
+
 #[get("/{id}")]
 pub async fn get_session(
     pool: web::Data<DbPool>,
@@ -206,7 +217,7 @@ pub async fn add_message(
         // 3. Execute tools
         for tool_call in tool_calls {
             let tool_id = tool_call.id.clone().unwrap_or_else(|| Uuid::new_v4().to_string());
-            let result = tools.call_tool(&tool_call.function.name, &tool_call.function.arguments).await;
+            let result = tools.call_tool(&tool_call.function.name, &tool_call.function.arguments, id, pool.get_ref().clone()).await;
             
             llm_messages.push(LlmMessage {
                 role: "tool".to_string(),
@@ -342,6 +353,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         web::scope("/sessions")
             .service(create_session)
             .service(list_sessions)
+            .service(purge_all_sessions)
             .service(get_stats)
             .service(get_session)
             .service(update_session)

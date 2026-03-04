@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Send, Plus, Trash2, Bot, User, Loader2, Edit3, Settings, X, Check, Code, Eye } from 'lucide-react';
+import { Send, Plus, Trash2, Bot, User, Loader2, Edit3, Settings, X, Check, Code, Eye, Globe, Brain } from 'lucide-react';
 import { sessionsApi } from '../api/sessions';
 import { useChatStream } from '../hooks/useChatStream';
 import { clsx } from 'clsx';
@@ -14,6 +14,8 @@ export const Chat = () => {
     const [isMetadataModalOpen, setIsMetadataModalOpen] = useState(false);
     const [metadataValue, setMetadataValue] = useState('');
     const [rawMessageIndices, setRawMessageIndices] = useState<Set<number>>(new Set());
+    const [searchEnabled, setSearchEnabled] = useState(false);
+    const [reasoningEnabled, setReasoningEnabled] = useState(false);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const queryClient = useQueryClient();
@@ -94,7 +96,7 @@ export const Chat = () => {
 
     const handleSend = () => {
         if (!input.trim() || isStreaming) return;
-        sendMessage(input);
+        sendMessage(input, searchEnabled, reasoningEnabled);
         setInput('');
     };
 
@@ -288,6 +290,33 @@ export const Chat = () => {
                                     className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-monokai-pink text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition-all shadow-lg"
                                 >
                                     <Send className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <div className="flex gap-4 mt-3 px-1">
+                                <button
+                                    onClick={() => setSearchEnabled(!searchEnabled)}
+                                    className={clsx(
+                                        "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono transition-all border",
+                                        searchEnabled
+                                            ? "bg-monokai-aqua/10 border-monokai-aqua text-monokai-aqua shadow-[0_0_10px_rgba(102,217,239,0.2)]"
+                                            : "bg-gruv-dark-3 border-gruv-dark-4 text-gruv-light-4 hover:border-gruv-light-4"
+                                    )}
+                                >
+                                    <Globe className={clsx("w-3.5 h-3.5", searchEnabled && "animate-pulse")} />
+                                    SEARCH ONLINE
+                                </button>
+
+                                <button
+                                    onClick={() => setReasoningEnabled(!reasoningEnabled)}
+                                    className={clsx(
+                                        "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono transition-all border",
+                                        reasoningEnabled
+                                            ? "bg-monokai-pink/10 border-monokai-pink text-monokai-pink shadow-[0_0_10px_rgba(249,38,114,0.2)]"
+                                            : "bg-gruv-dark-3 border-gruv-dark-4 text-gruv-light-4 hover:border-gruv-light-4"
+                                    )}
+                                >
+                                    <Brain className={clsx("w-3.5 h-3.5", reasoningEnabled && "animate-pulse")} />
+                                    REASONING
                                 </button>
                             </div>
                         </div>

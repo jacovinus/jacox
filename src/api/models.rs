@@ -1,11 +1,18 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct MemoryUsageEntry {
+    pub tag: String,
+    pub usage_bytes: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct SystemStats {
     pub total_sessions: i64,
     pub total_messages: i64,
     pub total_tokens: i64,
     pub db_size_bytes: u64,
+    pub memory_usage: Vec<MemoryUsageEntry>,
 }
 
 #[derive(Debug, Deserialize)]

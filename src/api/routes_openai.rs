@@ -270,8 +270,17 @@ pub async fn openai_chat_completions(
 
             // Execute tools
             for tool_call in tool_calls {
-                let tool_id = tool_call.id.clone().unwrap_or_else(|| Uuid::new_v4().to_string());
-                let result = tools.call_tool(&tool_call.function.name, &tool_call.function.arguments).await;
+                let mut tc = tool_call.clone();
+                if tc.id.is_none() {
+                    tc.id = Some(Uuid::new_v4().to_string());
+                }
+                let tool_id = tc.id.unwrap();
+                
+                // For OpenAI adapter, if no session_id provided, we use a temporary one or skip caching?
+                // Given SearchTool requires one, we'll use a random one if none provided, 
+                // but ideally the user should provide one.
+                let effective_sid = session_id.unwrap_or_else(Uuid::new_v4);
+                let result = tools.call_tool(&tc.function.name, &tc.function.arguments, effective_sid, pool.get_ref().clone()).await;
                 
                 current_llm_messages.push(LlmMessage {
                     role: "tool".to_string(),

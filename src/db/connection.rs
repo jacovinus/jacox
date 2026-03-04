@@ -5,8 +5,9 @@ use tracing::info;
 
 pub type DbPool = Arc<Mutex<Connection>>;
 
-const SCHEMA: &str = r#"
+pub const SCHEMA: &str = r#"
 CREATE SEQUENCE IF NOT EXISTS seq_messages_id;
+CREATE SEQUENCE IF NOT EXISTS seq_tool_results_id;
 
 CREATE TABLE IF NOT EXISTS sessions (
     id UUID PRIMARY KEY,
@@ -28,6 +29,16 @@ CREATE TABLE IF NOT EXISTS messages (
 );
 
 CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id, created_at);
+
+CREATE TABLE IF NOT EXISTS tool_results (
+    id BIGINT PRIMARY KEY DEFAULT nextval('seq_tool_results_id'),
+    session_id UUID,
+    source_url VARCHAR,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_tool_results_session ON tool_results(session_id);
 "#;
 
 pub fn get_connection(config: &DatabaseConfig) -> DbResult<DbPool> {

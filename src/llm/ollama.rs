@@ -14,7 +14,10 @@ pub struct OllamaProvider {
 impl OllamaProvider {
     pub fn new(base_url: String, default_model: String) -> Self {
         Self {
-            client: Client::new(),
+            client: Client::builder()
+                .timeout(std::time::Duration::from_secs(60))
+                .build()
+                .unwrap_or_else(|_| Client::new()),
             base_url,
             default_model,
         }
@@ -210,6 +213,6 @@ impl LlmProvider for OllamaProvider {
     }
 
     fn supported_models(&self) -> Vec<&str> {
-        vec!["llama3.2", "mistral"]
+        vec!["llama3.2", "mistral", "ministral-3:8b"]
     }
 }

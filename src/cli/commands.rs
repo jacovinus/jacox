@@ -28,7 +28,19 @@ pub enum Commands {
     Session {
         #[command(subcommand)]
         action: SessionAction,
+    },
+    
+    /// Global database operations
+    Database {
+        #[command(subcommand)]
+        action: DatabaseAction,
     }
+}
+
+#[derive(Subcommand)]
+pub enum DatabaseAction {
+    /// Clear all data from the database
+    Purge,
 }
 
 #[derive(Subcommand)]
