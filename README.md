@@ -86,6 +86,7 @@ Manage your Jacox API keys and monitor your provider fleet (OpenAI, Anthropic, O
 ## 📚 Documentation
 - **[Features Guide](FEATURES_GUIDE.md)**: Deep-dive into capabilities and use cases.
 - **[Changelog](CHANGELOG.md)**: Latest updates and version history.
+- **[Project Journey](JOURNEY.md)**: Roadmap & vision board for the future.
 - **[API Guide](API_GUIDE.md)**: Detailed REST & WebSocket endpoint documentation.
 - **[System Status](static/index.html)**: Landing page and health status.
 
