@@ -90,6 +90,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(cors)
             .configure(jacox::api::routes::configure)
             .configure(jacox::api::websocket::configure)
+            .configure(jacox::api::config_routes::configure)
             .service(jacox::api::routes_openai::openai_chat_completions)
             // Serve static files from React build
             .service(

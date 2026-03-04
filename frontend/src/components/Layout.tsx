@@ -36,6 +36,7 @@ const SidebarItem = ({ to, icon: Icon, children }: { to: string, icon: any, chil
 
 import { useHealthCheck } from '../hooks/useHealthCheck';
 import { DisconnectedOverlay } from './DisconnectedOverlay';
+import { ProviderSelector } from './ProviderSelector';
 
 export const Layout = () => {
     const { isOnline, apiConnected, dbConnected, isRetrying } = useHealthCheck();
@@ -52,6 +53,10 @@ export const Layout = () => {
                     <span className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white to-gruv-light-4 bg-clip-text text-transparent">
                         Jacox
                     </span>
+                </div>
+
+                <div className="px-2">
+                    <ProviderSelector />
                 </div>
 
                 <nav className="flex flex-col gap-2 flex-grow">

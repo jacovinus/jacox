@@ -3,16 +3,16 @@ use reqwest::Client;
 use serde_json::json;
 use tokio::sync::mpsc::Sender;
 
-use crate::llm::{models::{ChatOptions, ChatResponse, Message, Usage, ToolCall}, LlmError, LlmProvider};
+use crate::llm::{models::{ChatOptions, ChatResponse, Message, Usage}, LlmError, LlmProvider};
 
-pub struct OpenAiProvider {
+pub struct CopilotProvider {
     client: Client,
     api_key: String,
     base_url: String,
     default_model: String,
 }
 
-impl OpenAiProvider {
+impl CopilotProvider {
     pub fn new(api_key: String, base_url: String, default_model: String) -> Self {
         Self {
             client: Client::builder()
@@ -27,42 +27,39 @@ impl OpenAiProvider {
 }
 
 #[async_trait]
-impl LlmProvider for OpenAiProvider {
+impl LlmProvider for CopilotProvider {
     fn name(&self) -> &str {
-        "openai"
+        "copilot"
     }
 
     async fn chat(&self, messages: &[Message], options: ChatOptions) -> Result<ChatResponse, LlmError> {
         let model = options.model.as_deref().unwrap_or(&self.default_model);
 
-        let mut final_messages: Vec<Message> = messages.to_vec();
-        if let Some(system) = &options.system_prompt {
-            final_messages.insert(0, Message {
-                role: "system".to_string(),
-                content: system.clone(),
-                tool_calls: None,
-                tool_call_id: None,
-            });
-        }
-
         let mut body = json!({
             "model": model,
-            "messages": final_messages,
+            "messages": messages,
             "temperature": options.temperature.unwrap_or(0.7),
             "max_tokens": options.max_tokens.unwrap_or(4096),
         });
 
-        if let Some(tools) = &options.tools {
-            body["tools"] = json!(tools);
-        }
-        if let Some(choice) = &options.tool_choice {
-            body["tool_choice"] = json!(choice);
+        if let Some(system) = &options.system_prompt {
+            let mut final_messages = vec![Message {
+                role: "system".to_string(),
+                content: system.clone(),
+                tool_calls: None,
+                tool_call_id: None,
+            }];
+            final_messages.extend_from_slice(messages);
+            body["messages"] = json!(final_messages);
         }
 
         let response = self
             .client
             .post(format!("{}/chat/completions", self.base_url))
             .header("Authorization", format!("Bearer {}", self.api_key))
+            .header("Editor-Version", "vscode/1.93.0")
+            .header("Source", "vscode-chat")
+            .header("Openai-Organization", "github-copilot")
             .header("Content-Type", "application/json")
             .json(&body)
             .send()
@@ -72,10 +69,7 @@ impl LlmProvider for OpenAiProvider {
         if !response.status().is_success() {
             let status = response.status();
             let text = response.text().await.unwrap_or_default();
-            if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
-                return Err(LlmError::RateLimited);
-            }
-            return Err(LlmError::Api(format!("OpenAI Error {}: {}", status, text)));
+            return Err(LlmError::Api(format!("Copilot Error {}: {}", status, text)));
         }
 
         let json: serde_json::Value = response
@@ -83,14 +77,10 @@ impl LlmProvider for OpenAiProvider {
             .await
             .map_err(|e| LlmError::Network(e.to_string()))?;
 
-        let message = &json["choices"][0]["message"];
-        let content = message["content"]
+        let content = json["choices"][0]["message"]["content"]
             .as_str()
             .unwrap_or_default()
             .to_string();
-
-        let tool_calls: Option<Vec<ToolCall>> = message.get("tool_calls")
-            .and_then(|tc| serde_json::from_value(tc.clone()).ok());
 
         let usage = if let Some(u) = json.get("usage") {
             Some(Usage {
@@ -105,7 +95,7 @@ impl LlmProvider for OpenAiProvider {
             content,
             model: model.to_string(),
             usage,
-            tool_calls,
+            tool_calls: None,
         })
     }
 
@@ -117,35 +107,32 @@ impl LlmProvider for OpenAiProvider {
     ) -> Result<(), LlmError> {
         let model = options.model.as_deref().unwrap_or(&self.default_model);
 
-        let mut final_messages: Vec<Message> = messages.to_vec();
-        if let Some(system) = &options.system_prompt {
-            final_messages.insert(0, Message {
-                role: "system".to_string(),
-                content: system.clone(),
-                tool_calls: None,
-                tool_call_id: None,
-            });
-        }
-
         let mut body = json!({
             "model": model,
-            "messages": final_messages,
+            "messages": messages,
             "stream": true,
             "temperature": options.temperature.unwrap_or(0.7),
             "max_tokens": options.max_tokens.unwrap_or(4096),
         });
 
-        if let Some(tools) = &options.tools {
-            body["tools"] = json!(tools);
-        }
-        if let Some(choice) = &options.tool_choice {
-            body["tool_choice"] = json!(choice);
+        if let Some(system) = &options.system_prompt {
+            let mut final_messages = vec![Message {
+                role: "system".to_string(),
+                content: system.clone(),
+                tool_calls: None,
+                tool_call_id: None,
+            }];
+            final_messages.extend_from_slice(messages);
+            body["messages"] = json!(final_messages);
         }
 
         let response = self
             .client
             .post(format!("{}/chat/completions", self.base_url))
             .header("Authorization", format!("Bearer {}", self.api_key))
+            .header("Editor-Version", "vscode/1.93.0")
+            .header("Source", "vscode-chat")
+            .header("Openai-Organization", "github-copilot")
             .header("Content-Type", "application/json")
             .json(&body)
             .send()
@@ -155,10 +142,7 @@ impl LlmProvider for OpenAiProvider {
         if !response.status().is_success() {
             let status = response.status();
             let text = response.text().await.unwrap_or_default();
-            if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
-                return Err(LlmError::RateLimited);
-            }
-            return Err(LlmError::Api(format!("OpenAI Stream Error {}: {}", status, text)));
+            return Err(LlmError::Api(format!("Copilot Stream Error {}: {}", status, text)));
         }
 
         let mut stream = response.bytes_stream();
@@ -187,7 +171,7 @@ impl LlmProvider for OpenAiProvider {
     }
 
     fn supported_models(&self) -> Vec<String> {
-        vec!["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"].into_iter().map(|s| s.to_string()).collect()
+        vec!["gpt-4o", "gpt-4", "gpt-3.5-turbo"].into_iter().map(|s| s.to_string()).collect()
     }
 
     async fn discover_models(&self) -> Result<Vec<String>, LlmError> {
@@ -195,6 +179,8 @@ impl LlmProvider for OpenAiProvider {
             .client
             .get(format!("{}/models", self.base_url))
             .header("Authorization", format!("Bearer {}", self.api_key))
+            .header("Editor-Version", "vscode/1.93.0")
+            .header("Source", "vscode-chat")
             .send()
             .await
             .map_err(|e| LlmError::Network(e.to_string()))?;
@@ -227,6 +213,8 @@ impl LlmProvider for OpenAiProvider {
             .client
             .get(format!("{}/models", self.base_url))
             .header("Authorization", format!("Bearer {}", self.api_key))
+            .header("Editor-Version", "vscode/1.93.0")
+            .header("Source", "vscode-chat")
             .send()
             .await
             .map_err(|e| LlmError::Network(e.to_string()))?;
@@ -235,7 +223,7 @@ impl LlmProvider for OpenAiProvider {
             Ok(())
         } else {
             let text = response.text().await.unwrap_or_default();
-            Err(LlmError::Api(format!("OpenAI connection failed: {}", text)))
+            Err(LlmError::Api(format!("Copilot connection failed: {}", text)))
         }
     }
 

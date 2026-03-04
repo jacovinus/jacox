@@ -64,3 +64,10 @@ export interface SystemStats {
   db_size_bytes: number;
   memory_usage: MemoryUsageEntry[];
 }
+
+export interface ProviderInfo {
+    id: string;
+    active: boolean;
+    supported_models: string[];
+    status: 'online' | 'offline' | 'unverified';
+}
