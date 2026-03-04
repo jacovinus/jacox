@@ -10,20 +10,23 @@
 Jacox isn't just a server; it's a sleek, dark-mode experience inspired by the **Monokai-Gruvbox** palette. 
 
 - **Rich Markdown Rendering**: Full GFM support with optimized syntax highlighting.
-- **High-Fidelity Charts**: Render interactive **Line** and **Bar** charts with sub-micro granularity and tooltips—perfect for financial or temporal data.
-- **Dynamic Graphics**: Render **Live SVGs** directly in the chat—designed for instant visualization.
-- **Micro-animations**: A fluid, responsive interface that feels alive with real-time **Thinking & Searching** status indicators.
-- **Raw/Formatted Toggles**: Deep-dive into LLM outputs with instant view switching.
-- **Process Cancellation**: Instantly stop any long-running generation or search with a single click.
+- **High-Fidelity Charts**: Interactive **Line** and **Bar** charts with sub-micro granularity. [Learn more](FEATURES_GUIDE.md#8-high-fidelity-data-visualization-charts-)
+- **Live SVGs**: Dynamic graphic rendering directly in the chat.
+- **Micro-animations**: A fluid, responsive interface with real-time **Thinking & Searching** status.
+- **Raw/Formatted Toggles**: Deep-dive into LLM outputs instantly.
+- **Process Cancellation**: Instantly stop any long-running generation or search.
 
 ![Chat in Action](static/screenshots/chat.png)
 
+---
+
 ## ⚡ Technical Excellence
 - **Rust Core**: Blazing fast, memory-safe execution using Actix-web.
-- **DuckDB Storage**: Analytical conversation memory in a single file (`chat.db`).
-- **Pluggable Intelligence**: Seamlessly switch between **OpenAI**, **Anthropic**, and **Ollama**.
-- **Internet Search**: Built-in scraper tool that allows models to fetch real-world data without external API keys.
-- **Real-Time Dashboard**: Monitor tokens, messages, and storage with high-fidelity telemetry.
+- **DuckDB Storage**: Analytical conversation memory in a single file (`chat.db`). [Learn more](FEATURES_GUIDE.md#2-local-memory-layer-duckdb-)
+- **Pluggable Intelligence**: Seamlessly switch between **OpenAI**, **Anthropic**, and **Ollama**. [Learn more](FEATURES_GUIDE.md#1-multi-provider-llm-engine-)
+- **Internet Search**: Built-in scraper tool for real-world data fetching. [Learn more](FEATURES_GUIDE.md#7-internet-search-tool-)
+- **Real-Time Dashboard**: High-fidelity telemetry for tokens, messages, and storage.
+- **Memory Profiling**: Detailed **DuckDB Memory Breakdown** with visual profiling. [See Changelog](CHANGELOG.md)
 
 ---
 
@@ -51,10 +54,10 @@ cargo run -- serve
 
 ---
 
-## � Dashboard & Telemetry
+## 📊 Dashboard & Telemetry
 The built-in dashboard provides a "God-view" of your AI infrastructure:
-- **Token Estimation**: Monitor your API costs with precise heuristics.
-- **Byte-Level Monitoring**: Track your actual database footprint.
+- **Token Estimation**: Monitor API costs with precise heuristics.
+- **Memory Inspection**: New! Deep-dive into DuckDB memory allocation (Buffer Manager, Storage, etc.).
 - **Health Telemetry**: Real-time status for your API and DuckDB kernels.
 
 ---
@@ -62,18 +65,21 @@ The built-in dashboard provides a "God-view" of your AI infrastructure:
 ## 🛠 Advanced Features
 
 ### 💻 Developer Hub (Playground)
-A full-featured modern React app for managing sessions, editing raw JSON metadata, and overriding system personalities on the fly.
-
-![Metadata Editor](static/screenshots/metadata.png)
+A full-featured modern React app for session management, metadata editing, and system overrides. [Learn more](FEATURES_GUIDE.md#6-interactive-playground-)
 
 ### 🔌 OpenAI Compatible Proxy
-Drop Jacox into any existing OpenAI-ready application. Just point your base URL to `http://localhost:8080/v1`.
+Drop Jacox into any existing OpenAI-ready application by pointing to `http://localhost:8080/v1`. [Learn more](FEATURES_GUIDE.md#4-openai-compatibility-proxy-)
 
-### 📦 Deployment Simplified
-- **Docker**: `docker compose up -d` for instant isolation.
-- **CLI**: Re-live the terminal era with a powerful integrated REPL.
-- **Export/Import**: Move your AI brain between environments via structured `.txt` files.
+### 📦 Lifecycle Management
+- **Database Purge**: Clear all data instantly via `cargo run -- database purge` or API. [See Changelog](CHANGELOG.md)
+- **Export/Import**: Move your AI brain between environments via `.txt` files. [Learn more](FEATURES_GUIDE.md#5-session-portability-importexport-)
+- **CLI REPL**: Integrated terminal interface for power users.
 
 ---
+
+## 📚 Documentation
+- **[Features Guide](FEATURES_GUIDE.md)**: Deep-dive into capabilities and use cases.
+- **[Changelog](CHANGELOG.md)**: Latest updates and version history.
+- **[API Documentation](static/index.html)**: Landing page and health status.
 
 Built with 🦀 and 🍕 for those who care about the details.
