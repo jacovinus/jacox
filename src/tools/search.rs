@@ -21,6 +21,7 @@ impl SearchTool {
         Self {
             client: Client::builder()
                 .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+                .timeout(std::time::Duration::from_secs(30))
                 .build()
                 .unwrap(),
         }
@@ -133,7 +134,7 @@ impl Tool for SearchTool {
         }
     }
 
-    async fn call(&self, arguments: &str) -> String {
+    async fn call(&self, arguments: &str, session_id: uuid::Uuid, pool: crate::db::DbPool) -> String {
         let args: SearchArguments = match serde_json::from_str(arguments) {
             Ok(a) => a,
             Err(e) => return format!("Error parsing arguments: {}", e),
@@ -146,13 +147,38 @@ impl Tool for SearchTool {
             return "No results found for that query.".to_string();
         }
 
-        let mut combined_content = String::new();
+        let mut combined_snippets = String::new();
+        combined_snippets.push_str("Search results found. Here are snippets from the top pages. ");
+        combined_snippets.push_str("The full content has been cached in the database. ");
+        combined_snippets.push_str("If you need more details from a specific source, use the 'read_full_content' tool with its ID.\n\n");
+
         for url in urls {
-            let content = self.scrape_page_content(&url).await;
-            combined_content.push_str(&content);
-            combined_content.push_str("\n\n---\n\n");
+            let full_content = self.scrape_page_content(&url).await;
+            
+            // 1. Cache full content in DuckDB
+            let cache_result = {
+                let conn = pool.lock().unwrap();
+                crate::db::service::DbService::insert_tool_result(&conn, session_id, &url, &full_content)
+            };
+
+            match cache_result {
+                Ok(cached) => {
+                    // 2. Generate snippet (top ~1500 chars)
+                    let snippet = full_content.chars().take(1500).collect::<String>();
+                    combined_snippets.push_str(&format!("--- Source ID: {} ---\nURL: {}\nSnippet:\n{}\n", cached.id, url, snippet));
+                    if full_content.len() > 1500 {
+                        combined_snippets.push_str("[... Content truncated. Use 'read_full_content' for more ...]\n");
+                    }
+                    combined_snippets.push_str("\n");
+                }
+                Err(e) => {
+                    error!("Failed to cache tool result: {}", e);
+                    // Fallback to sending full content if cache fails (though this might cause the 400 error again)
+                    combined_snippets.push_str(&full_content);
+                }
+            }
         }
 
-        combined_content
+        combined_snippets
     }
 }

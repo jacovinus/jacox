@@ -15,7 +15,10 @@ pub struct AnthropicProvider {
 impl AnthropicProvider {
     pub fn new(api_key: String, base_url: String, default_model: String) -> Self {
         Self {
-            client: Client::new(),
+            client: Client::builder()
+                .timeout(std::time::Duration::from_secs(60))
+                .build()
+                .unwrap_or_else(|_| Client::new()),
             api_key,
             base_url,
             default_model,

@@ -9,7 +9,7 @@ use crate::llm::{
     models::{ChatOptions, Message as LlmMessage},
     ProviderFactory,
 };
-use crate::cli::commands::{Commands, SessionAction};
+use crate::cli::commands::{Commands, SessionAction, DatabaseAction};
 use uuid::Uuid;
 
 pub async fn run_cli(command: Commands, config_path: String) {
@@ -111,6 +111,19 @@ pub async fn run_cli(command: Commands, config_path: String) {
                             println!("Import completed successfully.");
                         }
                         Err(e) => eprintln!("Failed to create session for import: {}", e),
+                    }
+                }
+            }
+        }
+        Commands::Database { action } => {
+            let pool = get_connection(&config.database).expect("DB error");
+            let conn = pool.lock().unwrap();
+            
+            match action {
+                DatabaseAction::Purge => {
+                    match DbService::purge_database(&conn) {
+                        Ok(_) => println!("Successfully purged database."),
+                        Err(e) => eprintln!("Error purging database: {}", e),
                     }
                 }
             }

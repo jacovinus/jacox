@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { sessionsApi } from '../api/sessions';
+import type { MemoryUsageEntry } from '../types';
 import {
     Activity,
     Clock,
@@ -138,10 +139,40 @@ export const Dashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="glass p-8 rounded-2xl h-80 flex flex-col items-center justify-center text-center">
-                    <Activity className="text-monokai-aqua w-12 h-12 mb-4 opacity-40 animate-pulse" />
-                    <h3 className="text-xl font-bold mb-2">System Active</h3>
-                    <p className="text-sm text-gruv-light-4 max-w-xs">WebSocket is listening for events on the default port.</p>
+                <div className="glass p-8 rounded-2xl min-h-80 flex flex-col">
+                    <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                        <Activity className="text-monokai-aqua w-5 h-5" />
+                        Memory Breakdown
+                    </h3>
+                    <div className="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar">
+                        {statsLoading ? (
+                            <div className="flex justify-center p-8"><Loader2 className="animate-spin text-monokai-aqua" /></div>
+                        ) : stats?.memory_usage && stats.memory_usage.length > 0 ? (
+                            stats.memory_usage
+                                .sort((a: MemoryUsageEntry, b: MemoryUsageEntry) => b.usage_bytes - a.usage_bytes)
+                                .map((m: MemoryUsageEntry, idx: number) => (
+                                    <div key={idx} className="flex flex-col gap-1.5 p-3 bg-gruv-dark-4/10 rounded-xl border border-gruv-dark-4/20">
+                                        <div className="flex justify-between items-center text-xs font-mono uppercase tracking-wider text-gruv-light-4">
+                                            <span>{m.tag.replace(/_/g, ' ')}</span>
+                                            <span className="text-monokai-aqua">{formatBytes(m.usage_bytes)}</span>
+                                        </div>
+                                        <div className="w-full bg-gruv-dark-4/30 h-1.5 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-monokai-aqua shadow-[0_0_10px_rgba(166,226,46,0.3)] transition-all duration-1000"
+                                                style={{
+                                                    width: `${Math.min(100, (m.usage_bytes / (stats?.memory_usage.reduce((sum: number, curr: MemoryUsageEntry) => sum + curr.usage_bytes, 0) || 1)) * 100)}%`
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                ))
+                        ) : (
+                            <div className="flex-grow flex flex-col items-center justify-center text-gruv-light-4 opacity-50">
+                                <Activity className="w-10 h-10 mb-2 opacity-20" />
+                                <p className="text-sm font-mono">No memory data available</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="glass p-8 rounded-2xl h-80 overflow-hidden flex flex-col">

@@ -22,3 +22,12 @@ pub struct Message {
     pub created_at: DateTime<Utc>,
     pub metadata: serde_json::Value,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ToolResult {
+    pub id: i64,
+    pub session_id: Uuid,
+    pub source_url: String,
+    pub content: String,
+    pub created_at: DateTime<Utc>,
+}

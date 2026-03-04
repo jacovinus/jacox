@@ -12,7 +12,7 @@ auth:
 
 llm:
   provider: "ollama"  # openai, anthropic, ollama, custom
-  model: "mistral:v0.3"
+  model: "ministral-3:8b"
   
   openai:
     api_base: "https://api.openai.com/v1"
@@ -26,7 +26,7 @@ llm:
   
   ollama:
     base_url: "http://localhost:11434"
-    default_model: "mistral"
+    default_model: "ministral-3:8b"
 
 chat:
   max_history_messages: 50

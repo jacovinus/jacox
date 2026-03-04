@@ -5,6 +5,8 @@ pub struct WsClientMessage {
     pub r#type: String, // Expected: "message", "cancel"
     pub content: String,
     pub stream: Option<bool>,
+    pub search: Option<bool>,
+    pub reason: Option<bool>,
 }
 
 #[derive(Debug, Serialize)]

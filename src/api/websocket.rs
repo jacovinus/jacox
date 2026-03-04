@@ -71,10 +71,14 @@ pub async fn ws_chat(
                                 let llm_clone = llm_arc.clone();
                                 let config_clone = config_arc.clone();
                                 let content = msg.content;
+                                let search = msg.search.unwrap_or(false);
+                                let reason = msg.reason.unwrap_or(false);
 
                                 active_task = Some(actix_web::rt::spawn(async move {
                                     handle_chat_message(
                                         content,
+                                        search,
+                                        reason,
                                         id,
                                         pool_clone,
                                         llm_clone,
@@ -126,46 +130,50 @@ pub async fn ws_chat(
 
 async fn handle_chat_message(
     content: String,
+    search: bool,
+    reason: bool,
     session_id: Uuid,
     pool: DbPool,
     llm: Arc<dyn LlmProvider>,
     config: Arc<crate::config::AppConfig>,
     session: &mut actix_ws::Session,
 ) {
+    info!("Starting handle_chat_message for session {:?}", session_id);
     // 1. Save user message to database
-    let conn = pool.lock().unwrap();
-    if let Err(e) = DbService::insert_message(
-        &conn,
-        session_id,
-        "user",
-        &content,
-        None,
-        None,
-        serde_json::json!({}),
-    ) {
-        error!("Failed to insert user message: {}", e);
-        let err_resp = WsServerMessage {
-            r#type: "error".to_string(),
-            content: "Database error".to_string(),
-        };
-        let _ = session
-            .text(serde_json::to_string(&err_resp).unwrap())
-            .await;
-        return;
+    {
+        let conn = pool.lock().unwrap();
+        if let Err(e) = DbService::insert_message(
+            &conn,
+            session_id,
+            "user",
+            &content,
+            None,
+            None,
+            serde_json::json!({}),
+        ) {
+            error!("Failed to insert user message: {}", e);
+            drop(conn); // Drop lock before await
+            let err_resp = WsServerMessage {
+                r#type: "error".to_string(),
+                content: "Database error".to_string(),
+            };
+            let _ = session
+                .text(serde_json::to_string(&err_resp).unwrap())
+                .await;
+            return;
+        }
     }
 
     // 2. Fetch History & Session Metadata
-    let history = match DbService::get_messages(&conn, session_id, 50, 0) {
-        Ok(msgs) => msgs,
-        Err(e) => {
-            error!("Failed to fetch history: {}", e);
-            return;
-        }
+    let (history, session_db) = {
+        let conn = pool.lock().unwrap();
+        let history = DbService::get_messages(&conn, session_id, 50, 0).unwrap_or_default();
+        let session_db = DbService::get_session(&conn, session_id).unwrap_or(None);
+        (history, session_db)
     };
+    info!("Fetched history and session metadata for session {:?}", session_id);
 
-    let session_db = DbService::get_session(&conn, session_id).unwrap_or(None);
     let mut system_prompt = config.chat.system_prompt.clone();
-
     if let Some(s) = session_db {
         if let Some(prompt) = s.metadata.get("system_prompt").and_then(|v| v.as_str()) {
             system_prompt = prompt.to_string();
@@ -186,25 +194,37 @@ async fn handle_chat_message(
         })
         .collect();
 
-    drop(conn);
-
     let tools = crate::tools::ToolRegistry::new();
     let current_date = chrono::Local::now().format("%A, %B %d, %Y").to_string();
     let grounded_system_prompt = system_prompt.replace("{current_date}", &current_date);
-    let final_prompt = format!("Current Date: {}.\n\n{}", current_date, grounded_system_prompt);
+    let mut final_prompt = format!("Current Date: {}.\n\n{}", current_date, grounded_system_prompt);
+
+    if reason {
+        final_prompt.push_str("\n\nIMPORTANT: Please reason step-by-step before providing your final answer. Externalize your internal monologue if possible.");
+    }
+
+    let mut tool_definitions = tools.get_definitions();
+    if !search {
+        // Filter out search tools if search is disabled
+        tool_definitions.retain(|t| {
+            t.function.name != "internet_search" && t.function.name != "read_full_content"
+        });
+    }
 
     let current_options = ChatOptions {
         system_prompt: Some(final_prompt),
-        tools: Some(tools.get_definitions()),
+        tools: Some(tool_definitions),
         ..Default::default()
     };
 
+    info!("Starting chat loop for session {:?}", session_id);
     let mut loop_count = 0;
     let max_loops = 5;
 
     while loop_count < max_loops {
         // Since we want tool support and it's easier to manage in non-streaming for the loop,
         // we use chat() here but we can send updates to the client.
+        info!("Calling LLM chat for session {:?}", session_id);
         let response = match llm.chat(&llm_messages, current_options.clone()).await {
             Ok(res) => res,
             Err(e) => {
@@ -212,6 +232,7 @@ async fn handle_chat_message(
                 return;
             }
         };
+        info!("LLM responded for session {:?}", session_id);
 
         if response.tool_calls.as_ref().map(|tc| tc.is_empty()).unwrap_or(true) {
             // Final response - stream it to client (we can simulate streaming or just send it)
@@ -242,7 +263,11 @@ async fn handle_chat_message(
         let tool_calls = response.tool_calls.unwrap();
         
         for tool_call in &tool_calls {
-            assistant_tool_calls.push(tool_call.clone());
+            let mut tc = tool_call.clone();
+            if tc.id.is_none() {
+                tc.id = Some(uuid::Uuid::new_v4().to_string());
+            }
+            assistant_tool_calls.push(tc);
             
             // Notify client about tool usage
             let status_msg = WsServerMessage {
@@ -263,7 +288,7 @@ async fn handle_chat_message(
         // Persist assistant message
         {
             let conn = pool.lock().unwrap();
-            let _ = DbService::insert_message(
+            let _ = crate::db::service::DbService::insert_message(
                 &conn,
                 session_id,
                 "assistant",
@@ -275,9 +300,11 @@ async fn handle_chat_message(
         }
 
         // Execute tools
-        for tool_call in tool_calls {
-            let tool_id = tool_call.id.clone().unwrap_or_else(|| Uuid::new_v4().to_string());
-            let result = tools.call_tool(&tool_call.function.name, &tool_call.function.arguments).await;
+        for tool_call in assistant_tool_calls {
+            let tool_id = tool_call.id.unwrap(); // Guaranteed to exist now
+            info!("Executing tool: {} with args: {} for session {:?}", tool_call.function.name, tool_call.function.arguments, session_id);
+            let result = tools.call_tool(&tool_call.function.name, &tool_call.function.arguments, session_id, pool.clone()).await;
+            info!("Tool {} execution completed for session {:?}", tool_call.function.name, session_id);
             
             llm_messages.push(LlmMessage {
                 role: "tool".to_string(),
@@ -289,7 +316,7 @@ async fn handle_chat_message(
             // Persist tool result
             {
                 let conn = pool.lock().unwrap();
-                let _ = DbService::insert_message(
+                let _ = crate::db::service::DbService::insert_message(
                     &conn,
                     session_id,
                     "tool",
