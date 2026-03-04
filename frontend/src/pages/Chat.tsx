@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Send, Plus, Trash2, Bot, User, Loader2, Edit3, Settings, X, Check, Code, Eye, Globe, Brain } from 'lucide-react';
+import { Send, Plus, Trash2, Bot, User, Loader2, Edit3, Settings, X, Check, Code, Eye, Globe, Brain, ChevronDown } from 'lucide-react';
 import { sessionsApi } from '../api/sessions';
+import { configApi } from '../api/config';
 import { useChatStream } from '../hooks/useChatStream';
 import { clsx } from 'clsx';
 import { MarkdownContent } from '../components/MarkdownContent';
@@ -24,6 +25,21 @@ export const Chat = () => {
         queryKey: ['sessions'],
         queryFn: () => sessionsApi.list()
     });
+
+    const { data: activeDetail } = useQuery({
+        queryKey: ['active-provider-detail'],
+        queryFn: () => configApi.getActiveProviderInfo(),
+        refetchInterval: 5000 // Poll faster for real-time feel
+    });
+
+    const selectModelMutation = useMutation({
+        mutationFn: (id: string) => configApi.setActiveModel(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['active-provider-detail'] });
+        }
+    });
+
+    const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
 
     const activeSession = sessions?.find(s => s.id === activeSessionId);
 
@@ -187,7 +203,50 @@ export const Chat = () => {
                                     {chatError ? (
                                         <span className="text-[10px] text-monokai-red font-mono">Error: {chatError}</span>
                                     ) : (
-                                        <span className="text-[10px] text-monokai-green font-mono uppercase tracking-wider opacity-60">Connected</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] text-monokai-green font-mono uppercase tracking-wider opacity-60">Connected</span>
+                                            <div className="w-1 h-1 rounded-full bg-gruv-dark-4" />
+                                            <div className="relative">
+                                                <button
+                                                    onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+                                                    className="flex items-center gap-1.5 text-[10px] font-mono text-monokai-aqua hover:text-monokai-aqua/80 transition-colors uppercase tracking-widest bg-monokai-aqua/5 px-2 py-0.5 rounded border border-monokai-aqua/20"
+                                                >
+                                                    {activeDetail?.active_model || 'Select Model'}
+                                                    <ChevronDown className={clsx("w-2.5 h-2.5 transition-transform", isModelDropdownOpen && "rotate-180")} />
+                                                </button>
+
+                                                {isModelDropdownOpen && activeDetail?.supported_models && (
+                                                    <>
+                                                        <div className="fixed inset-0 z-40" onClick={() => setIsModelDropdownOpen(false)} />
+                                                        <div className="absolute top-full left-0 mt-2 w-56 bg-gruv-dark-2 border border-gruv-dark-4 rounded-xl shadow-2xl z-50 overflow-hidden py-1">
+                                                            <div className="px-3 py-2 text-[10px] text-gruv-light-4 font-mono uppercase tracking-widest border-b border-gruv-dark-4/30 mb-1">
+                                                                Switch Model
+                                                            </div>
+                                                            <div className="max-h-64 overflow-y-auto scrollbar-thin">
+                                                                {activeDetail.supported_models.map(m => (
+                                                                    <button
+                                                                        key={m}
+                                                                        onClick={() => {
+                                                                            selectModelMutation.mutate(m);
+                                                                            setIsModelDropdownOpen(false);
+                                                                        }}
+                                                                        className={clsx(
+                                                                            "w-full px-3 py-2 text-left text-xs flex items-center justify-between transition-colors",
+                                                                            activeDetail.active_model === m
+                                                                                ? "bg-monokai-aqua/10 text-monokai-aqua font-bold"
+                                                                                : "text-gruv-light-3 hover:bg-gruv-dark-3 hover:text-gruv-light-1"
+                                                                        )}
+                                                                    >
+                                                                        <span className="truncate">{m}</span>
+                                                                        {activeDetail.active_model === m && <Check className="w-3 h-3" />}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
                             </div>

@@ -53,3 +53,21 @@ fn default_limit() -> usize {
 fn default_offset() -> usize {
     0
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ActiveProviderRequest {
+    pub provider_id: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ActiveModelRequest {
+    pub model_id: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ProviderInfo {
+    pub id: String,
+    pub active: bool,
+    pub supported_models: Vec<String>,
+    pub status: String, // "online", "offline", "unverified"
+}

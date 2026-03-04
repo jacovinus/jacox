@@ -38,12 +38,20 @@ pub struct OllamaConfig {
 }
 
 #[derive(Debug, Deserialize, Clone)]
+pub struct CopilotConfig {
+    pub api_base: String,
+    pub api_key: String,
+    pub default_model: String,
+}
+
+#[derive(Debug, Deserialize, Clone)]
 pub struct LlmConfig {
     pub provider: String,
     pub model: String,
     pub openai: Option<OpenAiConfig>,
     pub anthropic: Option<AnthropicConfig>,
     pub ollama: Option<OllamaConfig>,
+    pub copilot: Option<CopilotConfig>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -81,6 +89,9 @@ impl AppConfig {
         }
         if let Some(ref mut anthropic) = app_config.llm.anthropic {
             anthropic.api_key = expand_env(&anthropic.api_key);
+        }
+        if let Some(ref mut copilot) = app_config.llm.copilot {
+            copilot.api_key = expand_env(&copilot.api_key);
         }
         
         Ok(app_config)

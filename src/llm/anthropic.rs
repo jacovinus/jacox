@@ -193,7 +193,28 @@ impl LlmProvider for AnthropicProvider {
         Ok(())
     }
 
-    fn supported_models(&self) -> Vec<&str> {
-        vec!["claude-3-5-sonnet-20241022", "claude-3-opus-20240229"]
+    fn supported_models(&self) -> Vec<String> {
+        vec!["claude-3-5-sonnet-20241022", "claude-3-opus-20240229"].into_iter().map(|s| s.to_string()).collect()
+    }
+
+    async fn discover_models(&self) -> Result<Vec<String>, LlmError> {
+        Ok(self.supported_models())
+    }
+
+    async fn verify_connection(&self) -> Result<(), LlmError> {
+        // Anthropic doesn't have a simple GET /models endpoint. 
+        // We'll just check if the key is provided for now.
+        if self.api_key.is_empty() {
+            return Err(LlmError::Api("Anthropic API key is missing".to_string()));
+        }
+        Ok(())
+    }
+
+    fn default_model(&self) -> String {
+        self.default_model.clone()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }

@@ -2,15 +2,19 @@ pub mod anthropic;
 pub mod models;
 pub mod ollama;
 pub mod openai;
+pub mod copilot;
 
 use anthropic::AnthropicProvider;
 use ollama::OllamaProvider;
 use openai::OpenAiProvider;
+use copilot::CopilotProvider;
 
 use async_trait::async_trait;
 use thiserror::Error;
 use tokio::sync::mpsc::Sender;
 use std::sync::Arc;
+use std::collections::HashMap;
+use parking_lot::RwLock;
 
 use crate::config::AppConfig;
 use models::{ChatOptions, ChatResponse, Message};
@@ -40,10 +44,123 @@ pub trait LlmProvider: Send + Sync {
         tx: Sender<String>
     ) -> Result<(), LlmError>;
     
-    fn supported_models(&self) -> Vec<&str>;
+    fn supported_models(&self) -> Vec<String>;
+    
+    async fn discover_models(&self) -> Result<Vec<String>, LlmError> {
+        Ok(self.supported_models())
+    }
+
+    async fn verify_connection(&self) -> Result<(), LlmError> {
+        Ok(())
+    }
+
+    fn default_model(&self) -> String;
+
+    fn as_any(&self) -> &dyn std::any::Any;
 
     fn tools(&self) -> Vec<models::ToolDefinition> {
         vec![]
+    }
+}
+
+/// A manager that holds all available providers and handles dynamic switching.
+pub struct ProviderManager {
+    providers: HashMap<String, Arc<dyn LlmProvider>>,
+    active_provider_id: RwLock<String>,
+    active_model_id: RwLock<Option<String>>,
+}
+
+impl ProviderManager {
+    pub fn new(providers: HashMap<String, Arc<dyn LlmProvider>>, default_id: String) -> Self {
+        Self {
+            providers,
+            active_provider_id: RwLock::new(default_id),
+            active_model_id: RwLock::new(None),
+        }
+    }
+
+    pub fn set_active_provider(&self, id: &str) -> Result<(), String> {
+        if self.providers.contains_key(id) {
+            let mut active_id = self.active_provider_id.write();
+            *active_id = id.to_string();
+            Ok(())
+        } else {
+            Err(format!("Provider '{}' not found in registry", id))
+        }
+    }
+
+    pub fn get_active_provider_id(&self) -> String {
+        self.active_provider_id.read().clone()
+    }
+
+    pub fn get_active_model_id(&self) -> Option<String> {
+        self.active_model_id.read().clone()
+    }
+
+    pub fn set_active_model(&self, model_id: Option<String>) {
+        let mut active_model = self.active_model_id.write();
+        *active_model = model_id;
+    }
+
+    pub fn list_providers(&self) -> Vec<String> {
+        self.providers.keys().cloned().collect()
+    }
+
+    fn get_active_provider(&self) -> Arc<dyn LlmProvider> {
+        let id = self.active_provider_id.read();
+        self.providers.get(&*id).cloned().expect("Active provider must exist")
+    }
+}
+
+#[async_trait]
+impl LlmProvider for ProviderManager {
+    fn name(&self) -> &str {
+        // Technically this is a proxy, but we can return the active one's name 
+        // Or "provider-manager"
+        "provider-manager"
+    }
+
+    async fn chat(&self, messages: &[Message], mut options: ChatOptions) -> Result<ChatResponse, LlmError> {
+        if let Some(model) = self.get_active_model_id() {
+            options.model = Some(model);
+        }
+        self.get_active_provider().chat(messages, options).await
+    }
+
+    async fn chat_streaming(
+        &self,
+        messages: &[Message],
+        mut options: ChatOptions,
+        tx: Sender<String>,
+    ) -> Result<(), LlmError> {
+        if let Some(model) = self.get_active_model_id() {
+            options.model = Some(model);
+        }
+        self.get_active_provider().chat_streaming(messages, options, tx).await
+    }
+
+    fn supported_models(&self) -> Vec<String> {
+        self.get_active_provider().supported_models()
+    }
+
+    async fn discover_models(&self) -> Result<Vec<String>, LlmError> {
+        self.get_active_provider().discover_models().await
+    }
+
+    async fn verify_connection(&self) -> Result<(), LlmError> {
+        self.get_active_provider().verify_connection().await
+    }
+
+    fn tools(&self) -> Vec<models::ToolDefinition> {
+        self.get_active_provider().tools()
+    }
+
+    fn default_model(&self) -> String {
+        self.get_active_provider().default_model()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }
 
@@ -51,34 +168,45 @@ pub trait LlmProvider: Send + Sync {
 pub struct ProviderFactory;
 
 impl ProviderFactory {
-    pub fn create_default(config: &AppConfig) -> Option<Arc<dyn LlmProvider>> {
-        let provider_name = config.llm.provider.as_str();
+    pub fn create_all(config: &AppConfig) -> Arc<dyn LlmProvider> {
+        let mut providers: HashMap<String, Arc<dyn LlmProvider>> = HashMap::new();
         
-        match provider_name {
-            "openai" => {
-                let cfg = config.llm.openai.as_ref()?;
-                Some(Arc::new(OpenAiProvider::new(
-                    cfg.api_key.clone(),
-                    cfg.api_base.clone(),
-                    cfg.default_model.clone(),
-                )))
-            }
-            "anthropic" => {
-                let cfg = config.llm.anthropic.as_ref()?;
-                Some(Arc::new(AnthropicProvider::new(
-                    cfg.api_key.clone(),
-                    cfg.api_base.clone(),
-                    cfg.default_model.clone(),
-                )))
-            }
-            "ollama" => {
-                let cfg = config.llm.ollama.as_ref()?;
-                Some(Arc::new(OllamaProvider::new(
-                    cfg.base_url.clone(),
-                    cfg.default_model.clone(),
-                )))
-            }
-            _ => None,
+        if let Some(cfg) = &config.llm.openai {
+            providers.insert("openai".to_string(), Arc::new(OpenAiProvider::new(
+                cfg.api_key.clone(),
+                cfg.api_base.clone(),
+                cfg.default_model.clone(),
+            )));
         }
+        
+        if let Some(cfg) = &config.llm.anthropic {
+            providers.insert("anthropic".to_string(), Arc::new(AnthropicProvider::new(
+                cfg.api_key.clone(),
+                cfg.api_base.clone(),
+                cfg.default_model.clone(),
+            )));
+        }
+        
+        if let Some(cfg) = &config.llm.ollama {
+            providers.insert("ollama".to_string(), Arc::new(OllamaProvider::new(
+                cfg.base_url.clone(),
+                cfg.default_model.clone(),
+            )));
+        }
+
+        if let Some(cfg) = &config.llm.copilot {
+            providers.insert("copilot".to_string(), Arc::new(CopilotProvider::new(
+                cfg.api_key.clone(),
+                cfg.api_base.clone(),
+                cfg.default_model.clone(),
+            )));
+        }
+
+        let default_id = config.llm.provider.clone();
+        Arc::new(ProviderManager::new(providers, default_id))
+    }
+
+    pub fn create_default(config: &AppConfig) -> Option<Arc<dyn LlmProvider>> {
+        Some(Self::create_all(config))
     }
 }

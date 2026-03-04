@@ -212,7 +212,60 @@ impl LlmProvider for OllamaProvider {
         Ok(())
     }
 
-    fn supported_models(&self) -> Vec<&str> {
-        vec!["llama3.2", "mistral", "ministral-3:8b"]
+    fn supported_models(&self) -> Vec<String> {
+        vec!["llama3.2", "mistral", "ministral-3:8b"].into_iter().map(|s| s.to_string()).collect()
+    }
+
+    async fn discover_models(&self) -> Result<Vec<String>, LlmError> {
+        let response = self
+            .client
+            .get(format!("{}/api/tags", self.base_url))
+            .send()
+            .await
+            .map_err(|e| LlmError::Network(e.to_string()))?;
+
+        if !response.status().is_success() {
+            return Ok(self.supported_models());
+        }
+
+        let json: serde_json::Value = response
+            .json()
+            .await
+            .map_err(|e| LlmError::Network(e.to_string()))?;
+
+        if let Some(models) = json["models"].as_array() {
+            let model_names: Vec<String> = models
+                .iter()
+                .filter_map(|m| m["name"].as_str().map(|s| s.to_string()))
+                .collect();
+            if !model_names.is_empty() {
+                return Ok(model_names);
+            }
+        }
+
+        Ok(self.supported_models())
+    }
+
+    async fn verify_connection(&self) -> Result<(), LlmError> {
+        let response = self
+            .client
+            .get(format!("{}/api/tags", self.base_url))
+            .send()
+            .await
+            .map_err(|e| LlmError::Network(e.to_string()))?;
+
+        if response.status().is_success() {
+            Ok(())
+        } else {
+            Err(LlmError::Api(format!("Ollama connection failed with status: {}", response.status())))
+        }
+    }
+
+    fn default_model(&self) -> String {
+        self.default_model.clone()
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }

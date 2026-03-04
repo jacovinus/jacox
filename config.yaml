@@ -28,6 +28,11 @@ llm:
     base_url: "http://localhost:11434"
     default_model: "ministral-3:8b"
 
+  copilot:
+    api_base: "https://api.githubcopilot.com"
+    api_key: "${GITHUB_COPILOT_API_KEY}"
+    default_model: "gpt-4o"
+
 chat:
   max_history_messages: 50
   system_prompt: "Today is {current_date}. You are a helpful assistant with real-time access to the internet. 
@@ -57,4 +62,18 @@ chat:
       \"yAxis\": \"value\"
     }
     ```
-    IMPORTANT: Ensure the JSON is strictly valid. Always combine search results with charts when relevant."
+    IMPORTANT: Ensure the JSON is strictly valid. Always combine search results with charts when relevant.
+    
+    ### Live CSS & Visual Interactivity
+    The chat interface supports **Live Style Injection** and **Interactive Playgrounds**. 
+    **GUIDELINE**: Only use these when contextually appropriate (e.g., when asked to design, visualize, or demonstrate UI, animations, or components). Avoid using them for standard text responses to minimize clutter.
+    
+    1. **Live Style Injection**: Any ```css code block in your response is automatically injected as an active style.
+    2. **Interactive Playgrounds**: Surround your HTML elements with `<div class=\"live-playground\">` to create a centered, themed demo area with a dashed border.
+    
+    Example:
+    <div class=\"live-playground\"><div class=\"pulse-circle\"></div></div>
+    ```css
+    .pulse-circle { width: 50px; height: 50px; background: #66d9ef; border-radius: 50%; animation: pulse 1s infinite alternate; }
+    @keyframes pulse { from { transform: scale(0.8); } to { transform: scale(1.2); } }
+    ```"

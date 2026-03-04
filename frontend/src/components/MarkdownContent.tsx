@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { xonokai } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { ChartComponent } from './ChartComponent';
@@ -12,22 +13,23 @@ interface MarkdownContentProps {
 const MarkdownComponents: any = {
     code({ inline, className, children, ...props }: any) {
         const match = /language-(\w+)/.exec(className || '');
-        const isSvg = match?.[1] === 'svg';
-        const isJson = match?.[1] === 'json' || match?.[1] === 'chart';
+        const lang = match?.[1] || '';
+        const isSvg = lang === 'svg';
+        const isCss = lang === 'css';
+        const isJson = lang === 'json' || lang === 'chart';
 
         if (!inline && isJson) {
             try {
                 const rawContent = String(children || '').trim();
-                if (!rawContent) return null; // Don't render empty blocks
+                if (!rawContent) return null;
 
-                // Strip single-line comments // ...
                 const cleanContent = rawContent.replace(/\/\/.*$/gm, '');
                 const data = JSON.parse(cleanContent);
-                if (data.role === 'chart' || match?.[1] === 'chart') {
+                if (data.role === 'chart' || lang === 'chart') {
                     return <ChartComponent chartData={data} />;
                 }
             } catch (e) {
-                // Fallback to regular code block if parsing fails
+                // Fallback
             }
         }
 
@@ -41,6 +43,34 @@ const MarkdownComponents: any = {
                     <div className="text-[10px] uppercase font-bold tracking-widest text-gruv-light-4/40 mt-2 border-t border-gruv-dark-4/20 pt-2 px-4 text-center">
                         Live SVG Graphic
                     </div>
+                </div>
+            );
+        }
+
+        if (!inline && isCss) {
+            const cssContent = String(children).replace(/\n$/, '');
+            return (
+                <div className="my-4 rounded-xl overflow-hidden border border-gruv-dark-4/30 shadow-2xl bg-gruv-dark-3/30">
+                    <style dangerouslySetInnerHTML={{ __html: cssContent }} />
+                    <div className="bg-gruv-dark-3 px-4 py-2 text-[10px] font-mono text-monokai-aqua flex justify-between items-center border-b border-gruv-dark-4/20">
+                        <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-monokai-aqua animate-pulse" />
+                            <span>CSS LIVE STYLE</span>
+                        </div>
+                    </div>
+                    <SyntaxHighlighter
+                        language="css"
+                        style={xonokai}
+                        customStyle={{
+                            margin: 0,
+                            padding: '1.5rem',
+                            fontSize: '0.85rem',
+                            background: 'transparent',
+                        }}
+                        {...props}
+                    >
+                        {cssContent}
+                    </SyntaxHighlighter>
                 </div>
             );
         }
@@ -94,6 +124,18 @@ const MarkdownComponents: any = {
     p({ children }: any) {
         return <div className="mb-4 last:mb-0 leading-relaxed">{children}</div>;
     },
+    div({ children, className, ...props }: any) {
+        // Special container for live demos
+        if (className?.includes('live-playground')) {
+            return (
+                <div className="my-6 p-10 rounded-3xl border border-dashed border-monokai-pink/30 bg-monokai-pink/5 flex flex-col items-center justify-center gap-4 relative overflow-hidden" {...props}>
+                    <div className="absolute top-2 right-4 text-[8px] font-mono text-monokai-pink opacity-40 uppercase tracking-[0.2em]">Playground Area</div>
+                    {children}
+                </div>
+            );
+        }
+        return <div className={className} {...props}>{children}</div>;
+    },
     a({ children, href }: any) {
         return <a href={href} className="text-monokai-aqua hover:underline underline-offset-4" target="_blank" rel="noopener noreferrer">{children}</a>;
     },
@@ -133,6 +175,7 @@ export const MarkdownContent = memo(({ content }: MarkdownContentProps) => {
         <div className="prose prose-invert max-w-none break-words">
             <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeRaw]}
                 components={MarkdownComponents}
             >
                 {content}
