@@ -52,6 +52,11 @@ llm:
 cargo run -- serve
 ```
 
+### 4. Access the Interface
+The project contains two web interfaces:
+- **Project Landing Page**: Visit `http://localhost:8080` (or your configured port) to see the server status and landing page served from the `static/` directory.
+- **AI Command Center (Frontend)**: The primary React-based chat interface is located in the `frontend/` directory. To run it, follow the [Frontend Documentation](frontend/README.md) to launch the Vite development server (usually at `http://localhost:5173`).
+
 ---
 
 ## 📊 Dashboard & Telemetry

@@ -45,21 +45,37 @@ The UI follows a strict **Monokai-Gruvbox Fusion** palette, defined in the proje
 
 ---
 
-## 🚀 Development
+## 🚀 Development & Usage
 
-### Installation
+### 1. Prerequisites
+Ensure you have **Node.js** (v18+) and **pnpm** installed:
+```bash
+npm install -g pnpm
+```
+
+### 2. Installation
+Install all required dependencies:
 ```bash
 pnpm install
 ```
 
-### Run Dev Server
+### 3. Running for Development
+Launch the Vite development server with hot module replacement (HMR):
 ```bash
 pnpm dev
 ```
+By default, the frontend will be available at `http://localhost:5173`. Make sure the Jacox backend is also running to enable chat functionality.
 
-### Build for Production
+### 4. Building for Production
+Create a production-ready build in the `dist/` directory:
 ```bash
 pnpm build
+```
+
+### 5. Preview Production Build
+Check the build locally before deploying:
+```bash
+pnpm preview
 ```
 
 ---
