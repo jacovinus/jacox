@@ -1,20 +1,22 @@
 pub mod anthropic;
+pub mod copilot;
+pub mod llmos;
 pub mod models;
 pub mod ollama;
 pub mod openai;
-pub mod copilot;
 
 use anthropic::AnthropicProvider;
+use copilot::CopilotProvider;
+use llmos::LlmosProvider;
 use ollama::OllamaProvider;
 use openai::OpenAiProvider;
-use copilot::CopilotProvider;
 
 use async_trait::async_trait;
+use parking_lot::RwLock;
+use std::collections::HashMap;
+use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::mpsc::Sender;
-use std::sync::Arc;
-use std::collections::HashMap;
-use parking_lot::RwLock;
 
 use crate::config::AppConfig;
 use models::{ChatOptions, ChatResponse, Message};
@@ -34,23 +36,31 @@ pub enum LlmError {
 #[async_trait]
 pub trait LlmProvider: Send + Sync {
     fn name(&self) -> &str;
-    
-    async fn chat(&self, messages: &[Message], options: ChatOptions) -> Result<ChatResponse, LlmError>;
-    
-    async fn chat_streaming(
-        &self, 
-        messages: &[Message], 
+
+    async fn chat(
+        &self,
+        messages: &[Message],
         options: ChatOptions,
-        tx: Sender<String>
+    ) -> Result<ChatResponse, LlmError>;
+
+    async fn chat_streaming(
+        &self,
+        messages: &[Message],
+        options: ChatOptions,
+        tx: Sender<String>,
     ) -> Result<(), LlmError>;
-    
+
     fn supported_models(&self) -> Vec<String>;
-    
+
     async fn discover_models(&self) -> Result<Vec<String>, LlmError> {
         Ok(self.supported_models())
     }
 
     async fn verify_connection(&self) -> Result<(), LlmError> {
+        Ok(())
+    }
+
+    async fn cancel(&self, _session_id: &str) -> Result<(), LlmError> {
         Ok(())
     }
 
@@ -106,21 +116,32 @@ impl ProviderManager {
         self.providers.keys().cloned().collect()
     }
 
+    pub fn get_provider(&self, id: &str) -> Option<Arc<dyn LlmProvider>> {
+        self.providers.get(id).cloned()
+    }
+
     fn get_active_provider(&self) -> Arc<dyn LlmProvider> {
         let id = self.active_provider_id.read();
-        self.providers.get(&*id).cloned().expect("Active provider must exist")
+        self.providers
+            .get(&*id)
+            .cloned()
+            .expect("Active provider must exist")
     }
 }
 
 #[async_trait]
 impl LlmProvider for ProviderManager {
     fn name(&self) -> &str {
-        // Technically this is a proxy, but we can return the active one's name 
+        // Technically this is a proxy, but we can return the active one's name
         // Or "provider-manager"
         "provider-manager"
     }
 
-    async fn chat(&self, messages: &[Message], mut options: ChatOptions) -> Result<ChatResponse, LlmError> {
+    async fn chat(
+        &self,
+        messages: &[Message],
+        mut options: ChatOptions,
+    ) -> Result<ChatResponse, LlmError> {
         if let Some(model) = self.get_active_model_id() {
             options.model = Some(model);
         }
@@ -136,7 +157,9 @@ impl LlmProvider for ProviderManager {
         if let Some(model) = self.get_active_model_id() {
             options.model = Some(model);
         }
-        self.get_active_provider().chat_streaming(messages, options, tx).await
+        self.get_active_provider()
+            .chat_streaming(messages, options, tx)
+            .await
     }
 
     fn supported_models(&self) -> Vec<String> {
@@ -149,6 +172,10 @@ impl LlmProvider for ProviderManager {
 
     async fn verify_connection(&self) -> Result<(), LlmError> {
         self.get_active_provider().verify_connection().await
+    }
+
+    async fn cancel(&self, session_id: &str) -> Result<(), LlmError> {
+        self.get_active_provider().cancel(session_id).await
     }
 
     fn tools(&self) -> Vec<models::ToolDefinition> {
@@ -170,36 +197,58 @@ pub struct ProviderFactory;
 impl ProviderFactory {
     pub fn create_all(config: &AppConfig) -> Arc<dyn LlmProvider> {
         let mut providers: HashMap<String, Arc<dyn LlmProvider>> = HashMap::new();
-        
+
         if let Some(cfg) = &config.llm.openai {
-            providers.insert("openai".to_string(), Arc::new(OpenAiProvider::new(
-                cfg.api_key.clone(),
-                cfg.api_base.clone(),
-                cfg.default_model.clone(),
-            )));
+            providers.insert(
+                "openai".to_string(),
+                Arc::new(OpenAiProvider::new(
+                    cfg.api_key.clone(),
+                    cfg.api_base.clone(),
+                    cfg.default_model.clone(),
+                )),
+            );
         }
-        
+
         if let Some(cfg) = &config.llm.anthropic {
-            providers.insert("anthropic".to_string(), Arc::new(AnthropicProvider::new(
-                cfg.api_key.clone(),
-                cfg.api_base.clone(),
-                cfg.default_model.clone(),
-            )));
+            providers.insert(
+                "anthropic".to_string(),
+                Arc::new(AnthropicProvider::new(
+                    cfg.api_key.clone(),
+                    cfg.api_base.clone(),
+                    cfg.default_model.clone(),
+                )),
+            );
         }
-        
+
         if let Some(cfg) = &config.llm.ollama {
-            providers.insert("ollama".to_string(), Arc::new(OllamaProvider::new(
-                cfg.base_url.clone(),
-                cfg.default_model.clone(),
-            )));
+            providers.insert(
+                "ollama".to_string(),
+                Arc::new(OllamaProvider::new(
+                    cfg.base_url.clone(),
+                    cfg.default_model.clone(),
+                )),
+            );
         }
 
         if let Some(cfg) = &config.llm.copilot {
-            providers.insert("copilot".to_string(), Arc::new(CopilotProvider::new(
-                cfg.api_key.clone(),
-                cfg.api_base.clone(),
-                cfg.default_model.clone(),
-            )));
+            providers.insert(
+                "copilot".to_string(),
+                Arc::new(CopilotProvider::new(
+                    cfg.api_key.clone(),
+                    cfg.api_base.clone(),
+                    cfg.default_model.clone(),
+                )),
+            );
+        }
+
+        if let Some(cfg) = &config.llm.llmos {
+            providers.insert(
+                "llmos".to_string(),
+                Arc::new(LlmosProvider::new(
+                    cfg.base_url.clone(),
+                    cfg.default_model.clone(),
+                )),
+            );
         }
 
         let default_id = config.llm.provider.clone();

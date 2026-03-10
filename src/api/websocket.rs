@@ -27,10 +27,7 @@ pub async fn ws_chat(
     // Verify session exists before accepting connection
     {
         let conn = pool.lock().unwrap();
-        if DbService::get_session(&conn, id)
-            .unwrap_or(None)
-            .is_none()
-        {
+        if DbService::get_session(&conn, id).unwrap_or(None).is_none() {
             return Ok(HttpResponse::NotFound().body("Session not found"));
         }
     }
@@ -38,12 +35,12 @@ pub async fn ws_chat(
     info!("WebSocket connection established for session {:?}", id);
 
     // web::Data<T> is effectively Arc<T>.
-    let llm_arc = llm.get_ref().clone();    // Arc<dyn LlmProvider>
-    let pool_arc = pool.get_ref().clone();  // Arc<Mutex<Connection>>
-    
+    let llm_arc = llm.get_ref().clone(); // Arc<dyn LlmProvider>
+    let pool_arc = pool.get_ref().clone(); // Arc<Mutex<Connection>>
+
     // config is web::Data<AppConfig>, which is Arc<AppConfig>
     // We can get the inner Arc by cloning the Data and calling into_inner()
-    let config_arc = config.clone().into_inner(); 
+    let config_arc = config.clone().into_inner();
 
     actix_web::rt::spawn(async move {
         let mut active_task: Option<actix_web::rt::task::JoinHandle<()>> = None;
@@ -67,6 +64,7 @@ pub async fn ws_chat(
                                 }
 
                                 let mut session_clone = session.clone();
+                                let mut session_clone_err = session.clone();
                                 let pool_clone = pool_arc.clone();
                                 let llm_clone = llm_arc.clone();
                                 let config_clone = config_arc.clone();
@@ -84,26 +82,39 @@ pub async fn ws_chat(
                                         llm_clone,
                                         config_clone,
                                         &mut session_clone,
+                                        &mut session_clone_err,
                                     )
                                     .await;
                                 }));
                             }
                             "cancel" => {
+                                info!("Received cancel request for session {:?}", id);
                                 if let Some(handle) = active_task.take() {
+                                    let llm_cancel = llm_arc.clone();
+                                    let sid_cancel = id.to_string();
+                                    tokio::spawn(async move {
+                                        let _ = llm_cancel.cancel(&sid_cancel).await;
+                                    });
                                     handle.abort();
-                                    info!("Chat task for session {:?} cancelled by user", id);
-                                    
+                                    info!("Chat task for session {:?} aborted", id);
+
                                     let status_msg = WsServerMessage {
                                         r#type: "status".to_string(),
                                         content: "Process cancelled".to_string(),
                                     };
-                                    let _ = session.text(serde_json::to_string(&status_msg).unwrap()).await;
-                                    
+                                    let _ = session
+                                        .text(serde_json::to_string(&status_msg).unwrap())
+                                        .await;
+
                                     let done_msg = WsServerMessage {
                                         r#type: "done".to_string(),
                                         content: "".to_string(),
                                     };
-                                    let _ = session.text(serde_json::to_string(&done_msg).unwrap()).await;
+                                    let _ = session
+                                        .text(serde_json::to_string(&done_msg).unwrap())
+                                        .await;
+                                } else {
+                                    info!("No active task to cancel for session {:?}", id);
                                 }
                             }
                             _ => {
@@ -114,6 +125,11 @@ pub async fn ws_chat(
                 }
                 Message::Close(reason) => {
                     if let Some(handle) = active_task.take() {
+                        let llm_cancel = llm.clone();
+                        let sid_cancel = id.to_string();
+                        tokio::spawn(async move {
+                            let _ = llm_cancel.cancel(&sid_cancel).await;
+                        });
                         handle.abort();
                     }
                     let _ = session.close(reason).await;
@@ -137,9 +153,18 @@ async fn handle_chat_message(
     llm: Arc<dyn LlmProvider>,
     config: Arc<crate::config::AppConfig>,
     session: &mut actix_ws::Session,
+    session_err: &mut actix_ws::Session,
 ) {
     info!("Starting handle_chat_message for session {:?}", session_id);
-    // 1. Save user message to database
+
+    // 0. Send initial status
+    let start_status = WsServerMessage {
+        r#type: "status".to_string(),
+        content: "Thinking...".to_string(),
+    };
+    let _ = session
+        .text(serde_json::to_string(&start_status).unwrap())
+        .await;
     {
         let conn = pool.lock().unwrap();
         if let Err(e) = DbService::insert_message(
@@ -171,7 +196,10 @@ async fn handle_chat_message(
         let session_db = DbService::get_session(&conn, session_id).unwrap_or(None);
         (history, session_db)
     };
-    info!("Fetched history and session metadata for session {:?}", session_id);
+    info!(
+        "Fetched history and session metadata for session {:?}",
+        session_id
+    );
 
     let mut system_prompt = config.chat.system_prompt.clone();
     if let Some(s) = session_db {
@@ -183,8 +211,14 @@ async fn handle_chat_message(
     let mut llm_messages: Vec<LlmMessage> = history
         .into_iter()
         .map(|m| {
-            let tool_calls = m.metadata.get("tool_calls").and_then(|tc| serde_json::from_value(tc.clone()).ok());
-            let tool_call_id = m.metadata.get("tool_call_id").and_then(|tid| tid.as_str().map(|s| s.to_string()));
+            let tool_calls = m
+                .metadata
+                .get("tool_calls")
+                .and_then(|tc| serde_json::from_value(tc.clone()).ok());
+            let tool_call_id = m
+                .metadata
+                .get("tool_call_id")
+                .and_then(|tid| tid.as_str().map(|s| s.to_string()));
             LlmMessage {
                 role: m.role,
                 content: m.content,
@@ -197,7 +231,10 @@ async fn handle_chat_message(
     let tools = crate::tools::ToolRegistry::new();
     let current_date = chrono::Local::now().format("%A, %B %d, %Y").to_string();
     let grounded_system_prompt = system_prompt.replace("{current_date}", &current_date);
-    let mut final_prompt = format!("Current Date: {}.\n\n{}", current_date, grounded_system_prompt);
+    let mut final_prompt = format!(
+        "Current Date: {}.\n\n{}",
+        current_date, grounded_system_prompt
+    );
 
     if reason {
         final_prompt.push_str("\n\nIMPORTANT: Please reason step-by-step before providing your final answer. Externalize your internal monologue if possible.");
@@ -214,129 +251,100 @@ async fn handle_chat_message(
     let current_options = ChatOptions {
         system_prompt: Some(final_prompt),
         tools: Some(tool_definitions),
+        user: Some(session_id.to_string()),
+        max_tokens: Some(4096), // Increase default to prevent cut-off
         ..Default::default()
     };
 
     info!("Starting chat loop for session {:?}", session_id);
-    let mut loop_count = 0;
+    let loop_count = 0;
     let max_loops = 5;
 
     while loop_count < max_loops {
-        // Since we want tool support and it's easier to manage in non-streaming for the loop,
-        // we use chat() here but we can send updates to the client.
-        info!("Calling LLM chat for session {:?}", session_id);
-        let response = match llm.chat(&llm_messages, current_options.clone()).await {
-            Ok(res) => res,
-            Err(e) => {
-                error!("LLM Error: {:?}", e);
-                return;
+        // Use streaming for the primary interaction to ensure responsiveness
+        info!("Calling LLM chat_streaming for session {:?}", session_id);
+
+        let (tx_stream, mut rx_stream) = tokio::sync::mpsc::channel(100);
+        let llm_clone = llm.clone();
+        let messages_clone = llm_messages.clone();
+        let options_clone = current_options.clone();
+        let mut session_err_clone = session_err.clone();
+
+        let stream_handle = tokio::spawn(async move {
+            if let Err(e) = llm_clone
+                .chat_streaming(&messages_clone, options_clone, tx_stream)
+                .await
+            {
+                error!("Stream error in chat loop: {:?}", e);
+                let err_resp = WsServerMessage {
+                    r#type: "error".to_string(),
+                    content: format!("LLM Error: {}", e),
+                };
+                let _ = session_err_clone
+                    .text(serde_json::to_string(&err_resp).unwrap())
+                    .await;
             }
-        };
-        info!("LLM responded for session {:?}", session_id);
-
-        if response.tool_calls.as_ref().map(|tc| tc.is_empty()).unwrap_or(true) {
-            // Final response - stream it to client (we can simulate streaming or just send it)
-            // For better UX, we'll send it as chunks if it's large, but here we'll just send it.
-            let resp = WsServerMessage {
-                r#type: "chunk".to_string(),
-                content: response.content.clone(),
-            };
-            let _ = session.text(serde_json::to_string(&resp).unwrap()).await;
-
-            // Save final assistant message to database
-            let token_count = response.usage.map(|u| u.input_tokens + u.output_tokens).map(|t| t as i32);
-            let conn = pool.lock().unwrap();
-            let _ = DbService::insert_message(
-                &conn,
-                session_id,
-                "assistant",
-                &response.content,
-                Some(llm.name()),
-                token_count,
-                serde_json::json!({}),
-            );
-            break;
-        }
-
-        // Handle tool calls
-        let mut assistant_tool_calls = Vec::new();
-        let tool_calls = response.tool_calls.unwrap();
-        
-        for tool_call in &tool_calls {
-            let mut tc = tool_call.clone();
-            if tc.id.is_none() {
-                tc.id = Some(uuid::Uuid::new_v4().to_string());
-            }
-            assistant_tool_calls.push(tc);
-            
-            // Notify client about tool usage
-            let status_msg = WsServerMessage {
-                r#type: "status".to_string(),
-                content: format!("Searching: {}...", tool_call.function.name),
-            };
-            let _ = session.text(serde_json::to_string(&status_msg).unwrap()).await;
-        }
-
-        // Add assistant message with tool calls to history
-        llm_messages.push(LlmMessage {
-            role: "assistant".to_string(),
-            content: response.content.clone(),
-            tool_calls: Some(assistant_tool_calls.clone()),
-            tool_call_id: None,
         });
 
-        // Persist assistant message
+        let mut turn_content = String::new();
+        while let Some(chunk) = rx_stream.recv().await {
+            turn_content.push_str(&chunk);
+            let resp = WsServerMessage {
+                r#type: "chunk".to_string(),
+                content: chunk,
+            };
+            if let Ok(json) = serde_json::to_string(&resp) {
+                let _ = session.text(json).await;
+            }
+        }
+
+        // PERSIST FIRST
         {
             let conn = pool.lock().unwrap();
             let _ = crate::db::service::DbService::insert_message(
                 &conn,
                 session_id,
                 "assistant",
-                &response.content,
+                &turn_content,
                 Some(llm.name()),
                 None,
-                serde_json::json!({ "tool_calls": assistant_tool_calls }),
+                serde_json::json!({}),
             );
         }
 
-        // Execute tools
-        for tool_call in assistant_tool_calls {
-            let tool_id = tool_call.id.unwrap(); // Guaranteed to exist now
-            info!("Executing tool: {} with args: {} for session {:?}", tool_call.function.name, tool_call.function.arguments, session_id);
-            let result = tools.call_tool(&tool_call.function.name, &tool_call.function.arguments, session_id, pool.clone()).await;
-            info!("Tool {} execution completed for session {:?}", tool_call.function.name, session_id);
-            
-            llm_messages.push(LlmMessage {
-                role: "tool".to_string(),
-                content: result.clone(),
-                tool_calls: None,
-                tool_call_id: Some(tool_id.clone()),
-            });
+        // THEN SEND DONE signal to unlock UI
+        let done_msg = WsServerMessage {
+            r#type: "done".to_string(),
+            content: "".to_string(),
+        };
+        info!(
+            "Sending 'done' message to session {:?} after stream finished and persisted",
+            session_id
+        );
+        let _ = session
+            .text(serde_json::to_string(&done_msg).unwrap())
+            .await;
 
-            // Persist tool result
-            {
-                let conn = pool.lock().unwrap();
-                let _ = crate::db::service::DbService::insert_message(
-                    &conn,
-                    session_id,
-                    "tool",
-                    &result,
-                    None,
-                    None,
-                    serde_json::json!({ "tool_call_id": tool_id }),
-                );
-            }
-        }
+        let _ = stream_handle.await;
+        info!("LLMOS stream worker joined for session {:?}", session_id);
 
-        loop_count += 1;
+        // Check for tool calls (LLMOS currently doesn't support them in stream, so we check content if needed)
+        // For now, if we have content, we assume it's the final answer unless we find a tool call pattern.
+        // If the provider supports it, we'd check response.tool_calls here.
+        // Since LLMOS doesn't, we'll just persist and break.
+
+        // Add assistant message to history
+        llm_messages.push(LlmMessage {
+            role: "assistant".to_string(),
+            content: turn_content.clone(),
+            tool_calls: None,
+            tool_call_id: None,
+        });
+
+        // Check for simulated tool calls in content if necessary, or just break
+        break;
+        // loop_count += 1; // Increment if we implement tool-calling loop back
     }
-
-    // 5. Send 'done' message
-    let done_msg = WsServerMessage {
-        r#type: "done".to_string(),
-        content: "".to_string(),
-    };
-    let _ = session.text(serde_json::to_string(&done_msg).unwrap()).await;
 }
 
 pub fn configure(cfg: &mut web::ServiceConfig) {

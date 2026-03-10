@@ -50,11 +50,15 @@ where
     fn call(&self, req: ServiceRequest) -> Self::Future {
         let srv = self.service.clone();
 
-        // Skip auth for /health, /playground, root landing page, and OPTIONS requests
-        if req.method() == actix_web::http::Method::OPTIONS 
-            || req.path() == "/health" 
-            || req.path() == "/" 
-            || req.path() == "/playground" 
+        // Skip auth for /health, /playground, root landing page, OPTIONS requests,
+        // and any path that doesn't start with /api or /ws.
+        // This ensures frontend assets (js, css, etc) load without an API key.
+        let path = req.path();
+        if req.method() == actix_web::http::Method::OPTIONS
+            || path == "/health"
+            || path == "/"
+            || path == "/playground"
+            || (!path.starts_with("/api") && !path.starts_with("/ws"))
         {
             return Box::pin(async move { srv.call(req).await });
         }

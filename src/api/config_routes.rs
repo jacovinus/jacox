@@ -16,10 +16,17 @@ pub async fn list_providers(
             let mut providers = Vec::new();
             
             for id in m.list_providers() {
+                let provider = m.get_provider(&id);
+                let models = if let Some(p) = provider {
+                    p.supported_models()
+                } else {
+                    vec![]
+                };
+
                 providers.push(ProviderInfo {
                     id: id.clone(),
                     active: id == active_id,
-                    supported_models: vec![], 
+                    supported_models: models,
                     status: "unverified".to_string(),
                 });
             }
@@ -27,10 +34,11 @@ pub async fn list_providers(
         }
         None => {
             // Fallback for single provider configuration
+            let models = llm.discover_models().await.unwrap_or_else(|_| llm.supported_models());
             Ok(HttpResponse::Ok().json(vec![ProviderInfo {
                 id: llm.name().to_string(),
                 active: true,
-                supported_models: llm.supported_models(),
+                supported_models: models,
                 status: "online".to_string(),
             }]))
         }

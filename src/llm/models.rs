@@ -47,6 +47,7 @@ pub struct ChatOptions {
     pub system_prompt: Option<String>,
     pub tools: Option<Vec<ToolDefinition>>,
     pub tool_choice: Option<serde_json::Value>,
+    pub user: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

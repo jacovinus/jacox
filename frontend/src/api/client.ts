@@ -1,13 +1,14 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: (import.meta.env.VITE_API_BASE_URL || '/api')
 });
 
 api.interceptors.request.use((config) => {
-  const apiKey = localStorage.getItem('jacox_api_key') || 'sk-dev-key-123';
+  const apiKey = localStorage.getItem('jacox_api_key') ?? 'sk-dev-key-123';
   if (apiKey) {
-    config.headers.Authorization = `Bearer ${apiKey}`;
+    config.headers = config.headers || {};
+    config.headers['Authorization'] = `Bearer ${apiKey}`;
   }
   return config;
 });

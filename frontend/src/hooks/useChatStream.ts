@@ -40,7 +40,7 @@ export const useChatStream = (sessionId: string | null) => {
 
     ws.onmessage = (event) => {
       const data: WsServerMessage = JSON.parse(event.data);
-
+      console.log(data, "Data")
       if (data.type === 'chunk') {
         setIsStreaming(true);
         setIsWaiting(false);
@@ -75,11 +75,13 @@ export const useChatStream = (sessionId: string | null) => {
         setIsWaiting(true);
         setStatus(data.content);
       } else if (data.type === 'done') {
+        console.log('Stream done signal received');
         setIsStreaming(false);
         setIsWaiting(false);
         setStatus(null);
         streamBufferRef.current = "";
       } else if (data.type === 'error') {
+        console.error('Stream error message received:', data.content);
         setError(data.content);
         setIsStreaming(false);
         setIsWaiting(false);
@@ -87,14 +89,19 @@ export const useChatStream = (sessionId: string | null) => {
       }
     };
 
-    ws.onerror = () => {
+    ws.onerror = (e) => {
+      console.error('WebSocket error event:', e);
       setError('WebSocket connection error');
       setIsStreaming(false);
+      setIsWaiting(false);
+      setStatus(null);
     };
 
-    ws.onclose = () => {
-      console.log('WS Disconnected');
+    ws.onclose = (e) => {
+      console.log('WS Disconnected', e.code, e.reason);
       setIsStreaming(false);
+      setIsWaiting(false);
+      setStatus(null);
     };
   }, [sessionId]);
 

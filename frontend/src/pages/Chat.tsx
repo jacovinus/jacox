@@ -97,8 +97,6 @@ export const Chat = () => {
         onSuccess: (newSession) => {
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
             setActiveSessionId(newSession.id);
-            const apiKey = localStorage.getItem('jacox_api_key') || 'sk-dev-key-123';
-            connect(apiKey);
         }
     });
 
@@ -118,9 +116,10 @@ export const Chat = () => {
 
     const handleSessionChange = (id: string) => {
         setActiveSessionId(id);
-        const apiKey = localStorage.getItem('jacox_api_key') || 'sk-dev-key-123';
-        connect(apiKey);
     };
+
+    //   console.log(isWaiting, "Is Waiting")
+    //   console.log(isStreaming, "Is Streaming")
 
     return (
         <div className="flex h-[calc(100vh-140px)] gap-6">

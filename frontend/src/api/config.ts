@@ -18,7 +18,10 @@ export interface ActiveProviderDetail {
 export const configApi = {
     listProviders: async (): Promise<ProviderInfo[]> => {
         const resp = await client.get('/config/providers');
-        return resp.data;
+        const data = resp.data;
+        if (Array.isArray(data)) return data;
+        if (data && Array.isArray(data.providers)) return data.providers;
+        return [];
     },
     setActiveProvider: async (providerId: string): Promise<void> => {
         await client.post('/config/active-provider', { provider_id: providerId });

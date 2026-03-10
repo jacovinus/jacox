@@ -1,4 +1,4 @@
-use actix_web::{post, web, HttpResponse, HttpRequest, Result as WebResult};
+use actix_web::{post, web, HttpRequest, HttpResponse, Result as WebResult};
 use bytes::Bytes;
 use std::sync::Arc;
 use tokio::sync::mpsc;
@@ -8,11 +8,11 @@ use crate::api::models_openai::{
     OpenAIChatRequest, OpenAIChatResponse, OpenAIChoice, OpenAIMessage, OpenAIStreamChoice,
     OpenAIStreamChunk, OpenAIStreamDelta, OpenAIUsage,
 };
+use crate::db::{service::DbService, DbPool};
 use crate::llm::{
     models::{ChatOptions, Message as LlmMessage},
     LlmProvider,
 };
-use crate::db::{service::DbService, DbPool};
 
 #[post("/v1/chat/completions")]
 pub async fn openai_chat_completions(
@@ -22,7 +22,7 @@ pub async fn openai_chat_completions(
     req: web::Json<OpenAIChatRequest>,
 ) -> WebResult<HttpResponse> {
     let req = req.into_inner();
-    
+
     // Check for session persistence header
     let session_id = req_http
         .headers()
@@ -32,14 +32,18 @@ pub async fn openai_chat_completions(
 
     let current_date = chrono::Local::now().format("%A, %B %d, %Y").to_string();
     let grounding_str = format!("Current Date: {}.\n\n", current_date);
-    
+
     let mut current_llm_messages: Vec<LlmMessage> = req
         .messages
         .iter()
         .map(|m| LlmMessage {
             role: m.role.clone(),
             content: if m.role == "system" {
-                format!("{}{}", grounding_str, m.content.replace("{current_date}", &current_date))
+                format!(
+                    "{}{}",
+                    grounding_str,
+                    m.content.replace("{current_date}", &current_date)
+                )
             } else {
                 m.content.replace("{current_date}", &current_date)
             },
@@ -47,15 +51,18 @@ pub async fn openai_chat_completions(
             tool_call_id: m.tool_call_id.clone(),
         })
         .collect();
-        
+
     // If no system message was present, prepend one
     if !current_llm_messages.iter().any(|m| m.role == "system") {
-        current_llm_messages.insert(0, LlmMessage {
-            role: "system".to_string(),
-            content: grounding_str,
-            tool_calls: None,
-            tool_call_id: None,
-        });
+        current_llm_messages.insert(
+            0,
+            LlmMessage {
+                role: "system".to_string(),
+                content: grounding_str,
+                tool_calls: None,
+                tool_call_id: None,
+            },
+        );
     }
 
     // If session_id is provided, persist the last user message
@@ -86,6 +93,7 @@ pub async fn openai_chat_completions(
         system_prompt: None,
         tools: req.tools,
         tool_choice: req.tool_choice,
+        user: None,
     };
 
     // If no tools provided in request, offer the default ones from the registry
@@ -111,13 +119,13 @@ pub async fn openai_chat_completions(
                 tracing::error!("OpenAI Adapter Streaming Error: {:?}", e);
             }
         });
-        
+
         // ... (rest of streaming logic remains largely same, just uses current_llm_messages)
 
         let stream = async_stream::stream! {
             let id = format!("chatcmpl-{}", Uuid::new_v4());
             let mut full_content = String::new();
-            
+
             // OpenAI requires an empty role delta to start
             let initial_chunk = OpenAIStreamChunk {
                 id: id.clone(),
@@ -130,7 +138,7 @@ pub async fn openai_chat_completions(
                     finish_reason: None,
                 }],
             };
-            
+
             yield Ok::<Bytes, actix_web::Error>(Bytes::from(format!("data: {}\n\n", serde_json::to_string(&initial_chunk).unwrap())));
 
             while let Some(chunk_text) = rx.recv().await {
@@ -148,7 +156,7 @@ pub async fn openai_chat_completions(
                 };
                 yield Ok::<Bytes, actix_web::Error>(Bytes::from(format!("data: {}\n\n", serde_json::to_string(&chunk).unwrap())));
             }
-            
+
             // Persist the assistant message if session_id was present
             if let Some(sid) = session_id {
                 let conn = pool_clone.lock().unwrap();
@@ -197,12 +205,20 @@ pub async fn openai_chat_completions(
                 }
             };
 
-            if response.tool_calls.as_ref().map(|tc| tc.is_empty()).unwrap_or(true) {
+            if response
+                .tool_calls
+                .as_ref()
+                .map(|tc| tc.is_empty())
+                .unwrap_or(true)
+            {
                 // Final response
                 let openai_resp = OpenAIChatResponse {
                     id: format!("chatcmpl-{}", Uuid::new_v4()),
                     object: "chat.completion".to_string(),
-                    created: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs(),
+                    created: std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs(),
                     model: response.model.clone(),
                     choices: vec![OpenAIChoice {
                         index: 0,
@@ -230,7 +246,10 @@ pub async fn openai_chat_completions(
                         "assistant",
                         &response.content,
                         Some(&response.model),
-                        response.usage.as_ref().map(|u| (u.input_tokens + u.output_tokens) as i32),
+                        response
+                            .usage
+                            .as_ref()
+                            .map(|u| (u.input_tokens + u.output_tokens) as i32),
                         serde_json::json!({ "source": "openai_adapter" }),
                     );
                 }
@@ -241,7 +260,7 @@ pub async fn openai_chat_completions(
             // Handle tool calls
             let mut assistant_tool_calls = Vec::new();
             let tool_calls = response.tool_calls.unwrap();
-            
+
             for tool_call in &tool_calls {
                 assistant_tool_calls.push(tool_call.clone());
             }
@@ -275,13 +294,20 @@ pub async fn openai_chat_completions(
                     tc.id = Some(Uuid::new_v4().to_string());
                 }
                 let tool_id = tc.id.unwrap();
-                
+
                 // For OpenAI adapter, if no session_id provided, we use a temporary one or skip caching?
-                // Given SearchTool requires one, we'll use a random one if none provided, 
+                // Given SearchTool requires one, we'll use a random one if none provided,
                 // but ideally the user should provide one.
                 let effective_sid = session_id.unwrap_or_else(Uuid::new_v4);
-                let result = tools.call_tool(&tc.function.name, &tc.function.arguments, effective_sid, pool.get_ref().clone()).await;
-                
+                let result = tools
+                    .call_tool(
+                        &tc.function.name,
+                        &tc.function.arguments,
+                        effective_sid,
+                        pool.get_ref().clone(),
+                    )
+                    .await;
+
                 current_llm_messages.push(LlmMessage {
                     role: "tool".to_string(),
                     content: result.clone(),

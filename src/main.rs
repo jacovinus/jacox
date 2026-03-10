@@ -85,14 +85,17 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(config.clone()))
             .app_data(web::Data::new(db_pool.clone()))
             .app_data(web::Data::new(llm_provider.clone()))
-            .route("/health", web::get().to(health))
-            .wrap(ApiKeyAuth)
             .wrap(cors)
-            .configure(jacox::api::routes::configure)
+            .wrap(ApiKeyAuth)
+            .service(
+                web::scope("/api")
+                    .route("/health", web::get().to(health))
+                    .configure(jacox::api::routes::configure)
+                    .configure(jacox::api::config_routes::configure)
+                    .service(jacox::api::routes_openai::openai_chat_completions)
+            )
             .configure(jacox::api::websocket::configure)
-            .configure(jacox::api::config_routes::configure)
-            .service(jacox::api::routes_openai::openai_chat_completions)
-            // Serve static files from React build
+            // Serve static files AFTER the /api scope to avoid overshadowing it
             .service(
                 actix_files::Files::new("/", "./frontend/dist")
                     .index_file("index.html")

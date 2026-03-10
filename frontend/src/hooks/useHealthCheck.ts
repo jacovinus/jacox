@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api/client';
 
-const HEALTH_CHECK_URL = import.meta.env.VITE_API_BASE_URL + '/health';
+const HEALTH_CHECK_URL = '/health';
 
 export interface HealthStatus {
     isOnline: boolean;
@@ -21,7 +21,8 @@ export const useHealthCheck = (): HealthStatus => {
     useEffect(() => {
         const checkHealth = async () => {
             try {
-                const response = await axios.get(HEALTH_CHECK_URL, { timeout: 2000 });
+                // Use the configured API client so the Authorization header is included
+                const response = await api.get(HEALTH_CHECK_URL, { timeout: 2000 });
                 const data = response.data;
                 
                 setStatus({

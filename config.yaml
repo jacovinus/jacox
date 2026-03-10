@@ -11,8 +11,8 @@ auth:
   token_expiry_hours: 24
 
 llm:
-  provider: "ollama"  # openai, anthropic, ollama, custom
-  model: "ministral-3:8b"
+  provider: "llmos"  # openai, anthropic, ollama, custom
+  model: "mistral-7b"
   
   openai:
     api_base: "https://api.openai.com/v1"
@@ -32,6 +32,10 @@ llm:
     api_base: "https://api.githubcopilot.com"
     api_key: "${GITHUB_COPILOT_API_KEY}"
     default_model: "gpt-4o"
+
+  llmos:
+    base_url: "http://127.0.0.1:3000"
+    default_model: "mistral-7b"
 
 chat:
   max_history_messages: 50

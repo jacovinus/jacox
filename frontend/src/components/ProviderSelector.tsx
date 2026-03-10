@@ -42,11 +42,12 @@ export const ProviderSelector = () => {
         }
     });
 
-    const activeProvider = providers?.find(p => p.active);
-
     if (isLoading) return <div className="p-4 flex justify-center"><Loader2 className="animate-spin text-monokai-aqua w-5 h-5" /></div>;
 
-    if (!providers || providers.length === 0) {
+    const providerList = Array.isArray(providers) ? providers : [];
+    const activeProvider = providerList.find(p => p.active);
+
+    if (providerList.length === 0) {
         return (
             <div className="px-4 py-3 rounded-xl bg-monokai-red/10 border border-monokai-red/20 text-[10px] text-monokai-red font-mono">
                 API Error: Providers not found. Restart backend.
@@ -112,7 +113,7 @@ export const ProviderSelector = () => {
                                     <RefreshCw className={clsx("w-3 h-3", verifyMutation.isPending && "animate-spin")} />
                                 </button>
                             </div>
-                            {providers?.map(p => (
+                            {providerList.map(p => (
                                 <button
                                     key={p.id}
                                     onClick={() => switchMutation.mutate(p.id)}
