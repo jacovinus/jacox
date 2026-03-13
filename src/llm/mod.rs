@@ -71,7 +71,19 @@ pub trait LlmProvider: Send + Sync {
     fn tools(&self) -> Vec<models::ToolDefinition> {
         vec![]
     }
+
+    async fn get_mcp_tools(&self) -> Result<Vec<models::McpToolDefinition>, LlmError> {
+        Ok(vec![])
+    }
+
+    async fn execute_reasoning(
+        &self,
+        _graph: models::ReasoningGraph,
+    ) -> Result<HashMap<String, serde_json::Value>, LlmError> {
+        Err(LlmError::Api("Reasoning not supported by this provider".to_string()))
+    }
 }
+
 
 /// A manager that holds all available providers and handles dynamic switching.
 pub struct ProviderManager {
@@ -182,7 +194,19 @@ impl LlmProvider for ProviderManager {
         self.get_active_provider().tools()
     }
 
+    async fn get_mcp_tools(&self) -> Result<Vec<models::McpToolDefinition>, LlmError> {
+        self.get_active_provider().get_mcp_tools().await
+    }
+
+    async fn execute_reasoning(
+        &self,
+        graph: models::ReasoningGraph,
+    ) -> Result<HashMap<String, serde_json::Value>, LlmError> {
+        self.get_active_provider().execute_reasoning(graph).await
+    }
+
     fn default_model(&self) -> String {
+
         self.get_active_provider().default_model()
     }
 

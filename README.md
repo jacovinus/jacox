@@ -26,8 +26,11 @@ Jacox isn't just a server; it's a sleek, dark-mode experience inspired by the **
 - **Pluggable Intelligence**: Seamlessly switch between **OpenAI**, **Anthropic**, **Ollama**, and **GitHub Copilot**. 
 - **Chained Request Security**: Rolling handshake protection for internal LLMOS communication, preventing replay attacks.
 - **Internet Search**: Built-in scraper tool for real-world data fetching. [Learn more](FEATURES_GUIDE.md#7-internet-search-tool-)
+- **Reasoning Graph Engine**: Build and visualize multi-step plans with an interactive DAG-based engine and parallel node execution.
+- **MCP Tool Registry**: Integrated Model Context Protocol support for tool discovery and schema management.
 - **Real-Time Dashboard**: High-fidelity telemetry for tokens, messages, and storage.
 - **Memory Profiling**: Detailed **DuckDB Memory Breakdown** with visual profiling.
+- **Node 24 & React 19**: Modern frontend stack for maximum response times and security.
 
 ---
 

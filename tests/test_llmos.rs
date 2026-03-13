@@ -106,4 +106,50 @@ mod tests {
         let response = provider.chat(&messages, ChatOptions::default()).await.unwrap();
         assert_eq!(response.content, "Second response");
     }
+
+    #[tokio::test]
+    async fn test_llmos_get_mcp_tools() {
+        let mock_server = MockServer::start().await;
+        let provider = LlmosProvider::new(mock_server.uri(), "phi-4".to_string(), None);
+
+        Mock::given(method("GET"))
+            .and(path("/v1/mcp/tools"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "tools": [
+                    {
+                        "name": "calc",
+                        "description": "Calculator",
+                        "input_schema": {}
+                    }
+                ]
+            })))
+            .mount(&mock_server)
+            .await;
+
+        let tools = provider.get_mcp_tools().await.unwrap();
+        assert_eq!(tools.len(), 1);
+        assert_eq!(tools[0].name, "calc");
+    }
+
+    #[tokio::test]
+    async fn test_llmos_execute_reasoning() {
+        let mock_server = MockServer::start().await;
+        let provider = LlmosProvider::new(mock_server.uri(), "phi-4".to_string(), None);
+
+        Mock::given(method("POST"))
+            .and(path("/v1/reasoning/execute"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+                "results": {
+                    "node1": {"value": 42}
+                }
+            })))
+            .mount(&mock_server)
+            .await;
+
+        use jacox::llm::models::ReasoningGraph;
+        let graph = ReasoningGraph::default();
+        let results = provider.execute_reasoning(graph).await.unwrap();
+        
+        assert_eq!(results["node1"]["value"], 42);
+    }
 }

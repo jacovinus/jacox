@@ -348,6 +348,27 @@ pub async fn get_stats(
     }
 }
 
+#[get("/llm/mcp/tools")]
+pub async fn list_mcp_tools(
+    llm: web::Data<Arc<dyn LlmProvider>>,
+) -> WebResult<HttpResponse> {
+    match llm.get_mcp_tools().await {
+        Ok(tools) => Ok(HttpResponse::Ok().json(tools)),
+        Err(e) => Ok(HttpResponse::InternalServerError().body(e.to_string())),
+    }
+}
+
+#[post("/llm/reasoning/execute")]
+pub async fn execute_reasoning(
+    llm: web::Data<Arc<dyn LlmProvider>>,
+    graph: web::Json<crate::llm::models::ReasoningGraph>,
+) -> WebResult<HttpResponse> {
+    match llm.execute_reasoning(graph.into_inner()).await {
+        Ok(results) => Ok(HttpResponse::Ok().json(results)),
+        Err(e) => Ok(HttpResponse::InternalServerError().body(e.to_string())),
+    }
+}
+
 #[post("/query")]
 pub async fn query_sql(
     pool: web::Data<DbPool>,
@@ -363,6 +384,7 @@ pub async fn query_sql(
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/sessions")
+
             .service(create_session)
             .service(list_sessions)
             .service(purge_all_sessions)
@@ -377,4 +399,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     );
     
     cfg.service(query_sql);
+    cfg.service(list_mcp_tools);
+    cfg.service(execute_reasoning);
 }
+

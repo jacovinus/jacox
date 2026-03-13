@@ -63,3 +63,39 @@ pub struct Usage {
     pub input_tokens: u32,
     pub output_tokens: u32,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+pub enum NodeType {
+    LlmGeneration,
+    McpToolCall,
+    DataQuery,
+    Verification,
+    Summarization,
+    ConditionalBranch,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReasoningNode {
+    pub id: String,
+    pub node_type: NodeType,
+    pub payload: serde_json::Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReasoningEdge {
+    pub from: String,
+    pub to: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ReasoningGraph {
+    pub nodes: std::collections::HashMap<String, ReasoningNode>,
+    pub edges: Vec<ReasoningEdge>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct McpToolDefinition {
+    pub name: String,
+    pub description: String,
+    pub input_schema: serde_json::Value,
+}

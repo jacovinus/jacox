@@ -17,28 +17,28 @@ export interface ActiveProviderDetail {
 
 export const configApi = {
     listProviders: async (): Promise<ProviderInfo[]> => {
-        const resp = await client.get('/config/providers');
+        const resp = await client.get('config/providers');
         const data = resp.data;
         if (Array.isArray(data)) return data;
         if (data && Array.isArray(data.providers)) return data.providers;
         return [];
     },
     setActiveProvider: async (providerId: string): Promise<void> => {
-        await client.post('/config/active-provider', { provider_id: providerId });
+        await client.post('config/active-provider', { provider_id: providerId });
     },
     getActiveProviderInfo: async (): Promise<ActiveProviderDetail> => {
-        const resp = await client.get('/config/active-provider');
+        const resp = await client.get('config/active-provider');
         return resp.data;
     },
     verifyActiveProvider: async (): Promise<{ status: string, error?: string }> => {
-        const resp = await client.post('/config/active-provider/verify');
+        const resp = await client.post('config/active-provider/verify');
         return resp.data;
     },
     getActiveModel: async (): Promise<{ model_id: string | null }> => {
-        const resp = await client.get('/config/active-model');
+        const resp = await client.get('config/active-model');
         return resp.data;
     },
     setActiveModel: async (modelId: string | null): Promise<void> => {
-        await client.post('/config/active-model', { model_id: modelId });
+        await client.post('config/active-model', { model_id: modelId });
     }
 };

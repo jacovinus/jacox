@@ -43,7 +43,7 @@ const DatabaseExplorer: React.FC = () => {
     setSchemaLoading(true);
     try {
       // DuckDB specific schema query
-      const res = await api.post<QueryResponse>('/query', {
+      const res = await api.post<QueryResponse>('query', {
         sql: "SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = 'main' ORDER BY table_name, ordinal_position;"
       });
 
@@ -68,7 +68,7 @@ const DatabaseExplorer: React.FC = () => {
     setError(null);
     setCurrentPage(1);
     try {
-      const res = await api.post<QueryResponse>('/query', { sql: query });
+      const res = await api.post<QueryResponse>('query', { sql: query });
       setResults(res.data);
       setActiveTab('results');
     } catch (err: any) {

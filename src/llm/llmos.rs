@@ -5,6 +5,7 @@ use reqwest::Client;
 use serde_json::json;
 use tokio::sync::mpsc::Sender;
 use tracing::{debug, error, info};
+use std::collections::HashMap;
 
 use crate::llm::{
     models::{ChatOptions, ChatResponse, Message},
@@ -343,6 +344,57 @@ impl LlmProvider for LlmosProvider {
         Ok(())
     }
 
+    async fn get_mcp_tools(&self) -> Result<Vec<crate::llm::models::McpToolDefinition>, LlmError> {
+        let response = self
+            .authenticated_request(reqwest::Method::GET, "/v1/mcp/tools", None)
+            .await?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let text = response.text().await.unwrap_or_default();
+            return Err(LlmError::Api(format!("LLMOS MCP Error {}: {}", status, text)));
+        }
+
+        let json: serde_json::Value = response
+            .json()
+            .await
+            .map_err(|e| LlmError::Network(e.to_string()))?;
+
+        let tools: Vec<crate::llm::models::McpToolDefinition> = serde_json::from_value(json["tools"].clone())
+            .map_err(|e| LlmError::Api(format!("Failed to parse tools: {}", e)))?;
+
+        Ok(tools)
+    }
+
+    async fn execute_reasoning(
+        &self,
+        graph: crate::llm::models::ReasoningGraph,
+    ) -> Result<HashMap<String, serde_json::Value>, LlmError> {
+        let body = json!({
+            "graph": graph
+        });
+
+        let response = self
+            .authenticated_request(reqwest::Method::POST, "/v1/reasoning/execute", Some(body))
+            .await?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let text = response.text().await.unwrap_or_default();
+            return Err(LlmError::Api(format!("LLMOS Reasoning Error {}: {}", status, text)));
+        }
+
+        let json: serde_json::Value = response
+            .json()
+            .await
+            .map_err(|e| LlmError::Network(e.to_string()))?;
+
+        let results: HashMap<String, serde_json::Value> = serde_json::from_value(json["results"].clone())
+            .map_err(|e| LlmError::Api(format!("Failed to parse reasoning results: {}", e)))?;
+
+        Ok(results)
+    }
+
     fn default_model(&self) -> String {
         self.default_model.clone()
     }
@@ -351,3 +403,4 @@ impl LlmProvider for LlmosProvider {
         self
     }
 }
+

@@ -3,12 +3,13 @@
 The Jacox frontend is a high-performance, local-first React application designed for seamless interaction with local and cloud LLMs. It prioritizes aesthetic excellence (Monokai-Gruvbox) and technical robustness.
 
 ## 🛠 Tech Stack
-- **Framework**: React 19 + Vite
+- **Framework**: React 19 + Vite 6
 - **Styling**: Tailwind CSS 4 (Custom design system)
+- **Animation**: Framer Motion (used for Reasoning Graph)
 - **Data Fetching**: @tanstack/react-query
 - **Real-time**: WebSocket (actix-ws compatible)
 - **Icons**: Lucide React
-- **Visualization**: Recharts
+- **Visualization**: Recharts + Custom SVG Reasoning Graph
 
 ---
 
@@ -48,7 +49,7 @@ The UI follows a strict **Monokai-Gruvbox Fusion** palette, defined in the proje
 ## 🚀 Development & Usage
 
 ### 1. Prerequisites
-Ensure you have **Node.js** (v18+) and **pnpm** installed:
+Ensure you have **Node.js** (v24+) and **pnpm** installed:
 ```bash
 npm install -g pnpm
 ```

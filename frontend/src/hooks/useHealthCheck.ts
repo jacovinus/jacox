@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api/client';
 
-const HEALTH_CHECK_URL = '/health';
+const HEALTH_CHECK_URL = 'health';
 
 export interface HealthStatus {
     isOnline: boolean;

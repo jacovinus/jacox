@@ -81,7 +81,7 @@ where
 
         let path = req.path();
         if req.method() == actix_web::http::Method::OPTIONS
-            || path == "/health"
+            || path == "/api/health"
             || path == "/"
             || path == "/playground"
             || (!path.starts_with("/api") && !path.starts_with("/ws") && !path.starts_with("/sessions"))

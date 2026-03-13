@@ -7,7 +7,9 @@ import {
     Settings,
     ChevronRight,
     Cpu,
-    BookOpen
+    BookOpen,
+    Wrench,
+    Zap
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -66,6 +68,8 @@ export const Layout = () => {
                     <SidebarItem to="/database" icon={Database}>Database</SidebarItem>
                     <SidebarItem to="/db-explorer" icon={Database}>SQL Explorer</SidebarItem>
                     <SidebarItem to="/skills" icon={BookOpen}>Skills</SidebarItem>
+                    <SidebarItem to="/mcp-tools" icon={Wrench}>MCP Tools</SidebarItem>
+                    <SidebarItem to="/reasoning" icon={Zap}>Reasoning</SidebarItem>
                     <SidebarItem to="/settings" icon={Settings}>Settings</SidebarItem>
                 </nav>
 
