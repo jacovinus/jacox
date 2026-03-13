@@ -5,6 +5,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Chat } from './pages/Chat';
 import { Database } from './pages/Database';
 import { Settings } from './pages/Settings';
+import { Skills } from './pages/Skills';
 
 const queryClient = new QueryClient();
 
@@ -17,6 +18,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="chat" element={<Chat />} />
             <Route path="database" element={<Database />} />
+            <Route path="skills" element={<Skills />} />
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>

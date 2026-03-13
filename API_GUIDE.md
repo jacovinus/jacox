@@ -111,3 +111,69 @@ Check API and Database connectivity.
 Jacox provides a drop-in 1:1 replacement for OpenAI's Chat Completions.
 - **Endpoint**: `POST /v1/chat/completions`
 - **Compatibility**: Supports `model`, `messages`, `tools`, and `stream: false`.
+
+---
+
+## 📚 Skills
+
+A **Skill** is a named markdown snippet stored in the local database. Skills are copy-paste-ready and can be imported from any public URL.
+
+All endpoints require `Authorization: Bearer <API_KEY>`.
+
+### `GET /api/skills`
+List all skills with pagination.
+- **Query**: `?limit=50&offset=0`
+- **Response**: `200 OK` — JSON array of Skill objects.
+
+### `POST /api/skills`
+Create a new skill.
+- **Body**:
+  ```json
+  {
+    "name": "Senior Code Reviewer",
+    "content": "You are a senior engineer…",
+    "tags": "code, review",
+    "source_url": null
+  }
+  ```
+- **Response**: `201 Created` with the new Skill object.
+
+### `GET /api/skills/:id`
+Get a single skill by its numeric ID.
+- **Response**: `200 OK` with Skill object, or `404 Not Found`.
+
+### `PATCH /api/skills/:id`
+Partially update a skill. All fields are optional.
+- **Body**: `{ "name"?: "…", "content"?: "…", "tags"?: "…" }`
+- **Response**: `200 OK` with updated Skill object.
+
+### `DELETE /api/skills/:id`
+Permanently delete a skill.
+- **Response**: `204 No Content`.
+
+### `POST /api/skills/fetch-url`
+Fetch content from a public URL and store it as a skill in one step.
+- **Body**:
+  ```json
+  {
+    "url": "https://raw.githubusercontent.com/sindresorhus/awesome/main/readme.md",
+    "name": "Awesome README",
+    "tags": "reference"
+  }
+  ```
+- **Response**: `201 Created` with the new Skill object.
+
+> `text/html` pages are tag-stripped to plain text. `text/plain` and `text/markdown` are stored as-is.
+
+#### Skill Object Schema
+```json
+{
+  "id": 1,
+  "name": "Senior Code Reviewer",
+  "content": "You are a senior engineer…",
+  "tags": "code, review",
+  "source_url": null,
+  "created_at": "2026-03-13T15:00:00Z",
+  "updated_at": "2026-03-13T15:00:00Z"
+}
+```

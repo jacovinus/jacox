@@ -71,3 +71,27 @@ pub struct ProviderInfo {
     pub supported_models: Vec<String>,
     pub status: String, // "online", "offline", "unverified"
 }
+
+#[derive(Debug, Deserialize)]
+pub struct CreateSkillRequest {
+    pub name: String,
+    pub content: String,
+    #[serde(default)]
+    pub tags: String,
+    pub source_url: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateSkillRequest {
+    pub name: Option<String>,
+    pub content: Option<String>,
+    pub tags: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct FetchUrlRequest {
+    pub url: String,
+    pub name: String,
+    #[serde(default)]
+    pub tags: String,
+}

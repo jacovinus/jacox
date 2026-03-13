@@ -1,4 +1,4 @@
-use crate::db::models::{Message, Session, ToolResult};
+use crate::db::models::{Message, Session, Skill, ToolResult};
 use chrono::{DateTime, Utc};
 use duckdb::{params, params_from_iter, Connection, Result as DbResult, Row};
 use uuid::Uuid;
@@ -298,10 +298,133 @@ impl DbService {
             DROP TABLE IF EXISTS messages;
             DROP TABLE IF EXISTS tool_results;
             DROP TABLE IF EXISTS sessions;
+            DROP TABLE IF EXISTS skills;
             DROP SEQUENCE IF EXISTS seq_messages_id;
             DROP SEQUENCE IF EXISTS seq_tool_results_id;
+            DROP SEQUENCE IF EXISTS seq_skills_id;
         ")?;
         
         conn.execute_batch(crate::db::connection::SCHEMA)
+    }
+
+    // --- Skill Operations ---
+
+    fn row_to_skill(row: &Row) -> DbResult<Skill> {
+        let created_val: duckdb::types::Value = row.get(5)?;
+        let updated_val: duckdb::types::Value = row.get(6)?;
+
+        let created_str = match created_val {
+            duckdb::types::Value::Text(s) => s,
+            _ => String::new(),
+        };
+        let updated_str = match updated_val {
+            duckdb::types::Value::Text(s) => s,
+            _ => String::new(),
+        };
+
+        let created_at = created_str.parse::<DateTime<Utc>>().unwrap_or_else(|_| Utc::now());
+        let updated_at = updated_str.parse::<DateTime<Utc>>().unwrap_or_else(|_| Utc::now());
+
+        Ok(Skill {
+            id: row.get(0)?,
+            name: row.get::<_, String>(1)?,
+            content: row.get::<_, String>(2)?,
+            tags: row.get::<_, String>(3).unwrap_or_default(),
+            source_url: row.get::<_, Option<String>>(4)?,
+            created_at,
+            updated_at,
+        })
+    }
+
+    pub fn insert_skill(
+        conn: &Connection,
+        name: &str,
+        content: &str,
+        tags: &str,
+        source_url: Option<&str>,
+    ) -> DbResult<Skill> {
+        conn.execute(
+            "INSERT INTO skills (name, content, tags, source_url) VALUES (?, ?, ?, ?)",
+            params![name, content, tags, source_url],
+        )?;
+
+        let mut stmt = conn.prepare(
+            "SELECT id, name, content, tags, source_url, \
+             CAST(created_at AS VARCHAR), CAST(updated_at AS VARCHAR) \
+             FROM skills ORDER BY id DESC LIMIT 1",
+        )?;
+        let mut rows = stmt.query_map([], Self::row_to_skill)?;
+        Ok(rows.next().unwrap()?)
+    }
+
+    pub fn list_skills(conn: &Connection, limit: usize, offset: usize) -> DbResult<Vec<Skill>> {
+        let mut stmt = conn.prepare(
+            "SELECT id, name, content, tags, source_url, \
+             CAST(created_at AS VARCHAR), CAST(updated_at AS VARCHAR) \
+             FROM skills ORDER BY updated_at DESC LIMIT ? OFFSET ?",
+        )?;
+        let rows = stmt.query_map(params![limit as i64, offset as i64], Self::row_to_skill)?;
+        let mut skills = Vec::new();
+        for row in rows {
+            skills.push(row?);
+        }
+        Ok(skills)
+    }
+
+    pub fn get_skill(conn: &Connection, id: i64) -> DbResult<Option<Skill>> {
+        let mut stmt = conn.prepare(
+            "SELECT id, name, content, tags, source_url, \
+             CAST(created_at AS VARCHAR), CAST(updated_at AS VARCHAR) \
+             FROM skills WHERE id = ?",
+        )?;
+        let mut rows = stmt.query_map(params![id], Self::row_to_skill)?;
+        if let Some(row) = rows.next() {
+            Ok(Some(row?))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn update_skill(
+        conn: &Connection,
+        id: i64,
+        name: Option<String>,
+        content: Option<String>,
+        tags: Option<String>,
+    ) -> DbResult<Option<Skill>> {
+        let mut updates = Vec::new();
+        let mut params_vec: Vec<Box<dyn duckdb::ToSql>> = Vec::new();
+
+        if let Some(n) = name {
+            updates.push("name = ?");
+            params_vec.push(Box::new(n));
+        }
+        if let Some(c) = content {
+            updates.push("content = ?");
+            params_vec.push(Box::new(c));
+        }
+        if let Some(t) = tags {
+            updates.push("tags = ?");
+            params_vec.push(Box::new(t));
+        }
+
+        if updates.is_empty() {
+            return Self::get_skill(conn, id);
+        }
+
+        updates.push("updated_at = CURRENT_TIMESTAMP");
+
+        let sql = format!("UPDATE skills SET {} WHERE id = ?", updates.join(", "));
+        params_vec.push(Box::new(id));
+
+        let params_refs: Vec<&dyn duckdb::ToSql> = params_vec.iter().map(|b| b.as_ref()).collect();
+        conn.execute(&sql, params_from_iter(params_refs))?;
+
+        Self::get_skill(conn, id)
+    }
+
+    pub fn delete_skill(conn: &Connection, id: i64) -> DbResult<()> {
+        conn.execute("DELETE FROM skills WHERE id = ?", params![id])?;
+        Ok(())
     }
 }

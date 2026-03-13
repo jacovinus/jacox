@@ -39,6 +39,18 @@ CREATE TABLE IF NOT EXISTS tool_results (
 );
 
 CREATE INDEX IF NOT EXISTS idx_tool_results_session ON tool_results(session_id);
+
+CREATE SEQUENCE IF NOT EXISTS seq_skills_id;
+
+CREATE TABLE IF NOT EXISTS skills (
+    id         BIGINT PRIMARY KEY DEFAULT nextval('seq_skills_id'),
+    name       VARCHAR NOT NULL,
+    content    TEXT NOT NULL,
+    tags       VARCHAR DEFAULT '',
+    source_url VARCHAR,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 "#;
 
 pub fn get_connection(config: &DatabaseConfig) -> DbResult<DbPool> {

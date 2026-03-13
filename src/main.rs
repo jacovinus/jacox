@@ -92,6 +92,7 @@ async fn main() -> std::io::Result<()> {
                     .route("/health", web::get().to(health))
                     .configure(jacox::api::routes::configure)
                     .configure(jacox::api::config_routes::configure)
+                    .configure(jacox::api::skills_routes::configure)
                     .service(jacox::api::routes_openai::openai_chat_completions)
             )
             .configure(jacox::api::websocket::configure)

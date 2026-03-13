@@ -139,3 +139,33 @@ If an LLM provides a JSON block with `role: "chart"`, Jacox will render it as a 
 
 ### 🎯 Use Case: Financial Analysis
 Visualize stock trends, crypto prices, or server telemetry directly in the chat interface with interactive tooltips and granular data buckets.
+
+---
+
+## 9. Skills Library 📚
+A persistent library of reusable markdown snippets — system prompts, templates, role definitions, and more — that can be created, imported from a URL, and copied to the clipboard with a single click.
+
+### 🛠 Creating a Skill (API)
+```bash
+curl -X POST http://localhost:8080/api/skills \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer sk-dev-key-123" \
+  -d '{
+    "name": "Senior Code Reviewer",
+    "content": "You are a senior engineer. Review for correctness, performance, and security.",
+    "tags": "code, review"
+  }'
+```
+
+### 🌐 Importing from a URL
+```bash
+curl -X POST http://localhost:8080/api/skills/fetch-url \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer sk-dev-key-123" \
+  -d '{"name": "Awesome README", "url": "https://raw.githubusercontent.com/sindresorhus/awesome/main/readme.md"}'
+```
+
+### 🎯 Use Case: Personal Prompt Library
+Build a curated set of system personas ("Python Expert", "SQL Analyst", "Meeting Summarizer"). Before starting a new chat, open the **Skills** sidebar, copy the relevant persona to the clipboard, and paste it as the first message to instantly set the model's behavior without rewriting the same boilerplate every session.
+
+For full documentation see [SKILLS.md](./SKILLS.md).

@@ -31,3 +31,14 @@ pub struct ToolResult {
     pub content: String,
     pub created_at: DateTime<Utc>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Skill {
+    pub id: i64,
+    pub name: String,
+    pub content: String,
+    pub tags: String,
+    pub source_url: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}

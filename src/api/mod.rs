@@ -6,4 +6,5 @@ pub mod routes;
 pub mod routes_openai;
 pub mod websocket;
 pub mod config_routes;
+pub mod skills_routes;
 // pub mod routes;
