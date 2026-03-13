@@ -24,6 +24,7 @@ Jacox isn't just a server; it's a sleek, dark-mode experience inspired by the **
 - **Rust Core**: Blazing fast, memory-safe execution using Actix-web.
 - **DuckDB Storage**: Analytical conversation memory in a single file (`chat.db`). [Learn more](FEATURES_GUIDE.md#2-local-memory-layer-duckdb-)
 - **Pluggable Intelligence**: Seamlessly switch between **OpenAI**, **Anthropic**, **Ollama**, and **GitHub Copilot**. 
+- **Chained Request Security**: Rolling handshake protection for internal LLMOS communication, preventing replay attacks.
 - **Internet Search**: Built-in scraper tool for real-world data fetching. [Learn more](FEATURES_GUIDE.md#7-internet-search-tool-)
 - **Real-Time Dashboard**: High-fidelity telemetry for tokens, messages, and storage.
 - **Memory Profiling**: Detailed **DuckDB Memory Breakdown** with visual profiling.

@@ -74,6 +74,12 @@ response = client.chat.completions.create(
 ### 🎯 Use Case: Legacy Tool Modernization
 Take an older tool that only supports OpenAI and "modernize" it to work with local Open Source models (Llama 3, Mistral) by updating the `base_url`.
 
+### 🛡️ Internal Service Security (Rolling Tokens)
+When communicating with **LLMOS**, Jacox implements a **Chained Request Security** handshake. After every successful request, LLMOS rotates its internal token and provides a new one to Jacox via the `X-Next-Token` header. This ensures that:
+1.  **Replay Attacks** are impossible (sessions tokens die after one use).
+2.  **Token Theft** is mitigated (internal keys are short-lived).
+3.  **Self-Healing**: If a packet is lost, Jacox automatically uses the master API key to re-synchronize the chain.
+
 ---
 
 ## 5. Session Portability (Import/Export) 📥📤

@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use async_trait::async_trait;
 use futures_util::StreamExt;
 use reqwest::Client;
@@ -15,6 +16,7 @@ pub struct LlmosProvider {
     base_url: String,
     default_model: String,
     api_key: Option<String>,
+    rotating_token: Arc<std::sync::Mutex<Option<String>>>,
 }
 
 impl LlmosProvider {
@@ -27,6 +29,77 @@ impl LlmosProvider {
             base_url,
             default_model,
             api_key,
+            rotating_token: Arc::new(std::sync::Mutex::new(None)),
+        }
+    }
+
+    async fn authenticated_request(
+        &self,
+        method: reqwest::Method,
+        path: &str,
+        body: Option<serde_json::Value>,
+    ) -> Result<reqwest::Response, LlmError> {
+        let url = format!("{}{}", self.base_url, path);
+
+        let rotating_token = {
+            let guard = self.rotating_token.lock().unwrap();
+            guard.clone()
+        };
+
+        // 1. Attempt with rotating token if available
+        if let Some(token) = rotating_token {
+            let mut req = self.client.request(method.clone(), &url).bearer_auth(&token);
+            if let Some(b) = &body {
+                req = req.json(b);
+            }
+            let res = req
+                .send()
+                .await
+                .map_err(|e| LlmError::Network(e.to_string()))?;
+
+            if res.status().is_success() {
+                self.handle_token_rotation(&res);
+                return Ok(res);
+            }
+
+            if res.status() == reqwest::StatusCode::UNAUTHORIZED {
+                debug!("Rotating token unauthorized, falling back to master key");
+                {
+                    let mut guard = self.rotating_token.lock().unwrap();
+                    *guard = None;
+                }
+            } else {
+                // Return other statuses normally (404, 500, etc)
+                return Ok(res);
+            }
+        }
+
+        // 2. Fallback or Initial attempt with master key
+        let mut req = self.client.request(method, &url);
+        if let Some(master) = &self.api_key {
+            req = req.bearer_auth(master);
+        }
+        if let Some(b) = &body {
+            req = req.json(b);
+        }
+
+        let res = req
+            .send()
+            .await
+            .map_err(|e| LlmError::Network(e.to_string()))?;
+        if res.status().is_success() {
+            self.handle_token_rotation(&res);
+        }
+        Ok(res)
+    }
+
+    fn handle_token_rotation(&self, res: &reqwest::Response) {
+        if let Some(next_token) = res.headers().get("X-Next-Token") {
+            if let Ok(token_str) = next_token.to_str() {
+                let mut guard = self.rotating_token.lock().unwrap();
+                *guard = Some(token_str.to_string());
+                debug!("Token rotated successfully");
+            }
         }
     }
 }
@@ -65,19 +138,9 @@ impl LlmProvider for LlmosProvider {
             "temperature": options.temperature.unwrap_or(0.7),
         });
 
-        let mut request = self
-            .client
-            .post(format!("{}/v1/chat/completions", self.base_url));
-
-        if let Some(token) = &self.api_key {
-            request = request.bearer_auth(token);
-        }
-
-        let response = request
-            .json(&body)
-            .send()
-            .await
-            .map_err(|e| LlmError::Network(e.to_string()))?;
+        let response = self
+            .authenticated_request(reqwest::Method::POST, "/v1/chat/completions", Some(body))
+            .await?;
 
         if !response.status().is_success() {
             let status = response.status();
@@ -132,19 +195,9 @@ impl LlmProvider for LlmosProvider {
             "temperature": options.temperature.unwrap_or(0.7),
         });
 
-        let mut request = self
-            .client
-            .post(format!("{}/v1/chat/completions", self.base_url));
-
-        if let Some(token) = &self.api_key {
-            request = request.bearer_auth(token);
-        }
-
-        let response = request
-            .json(&body)
-            .send()
-            .await
-            .map_err(|e| LlmError::Network(e.to_string()))?;
+        let response = self
+            .authenticated_request(reqwest::Method::POST, "/v1/chat/completions", Some(body))
+            .await?;
 
         if !response.status().is_success() {
             let status = response.status();
@@ -243,18 +296,9 @@ impl LlmProvider for LlmosProvider {
     }
 
     async fn discover_models(&self) -> Result<Vec<String>, LlmError> {
-        let mut request = self
-            .client
-            .get(format!("{}/v1/models", self.base_url));
-
-        if let Some(token) = &self.api_key {
-            request = request.bearer_auth(token);
-        }
-
-        let response = request
-            .send()
-            .await
-            .map_err(|e| LlmError::Network(e.to_string()))?;
+        let response = self
+            .authenticated_request(reqwest::Method::GET, "/v1/models", None)
+            .await?;
 
         if !response.status().is_success() {
             return Ok(self.supported_models());
@@ -279,18 +323,9 @@ impl LlmProvider for LlmosProvider {
     }
 
     async fn verify_connection(&self) -> Result<(), LlmError> {
-        let mut request = self
-            .client
-            .get(format!("{}/health", self.base_url));
-
-        if let Some(token) = &self.api_key {
-            request = request.bearer_auth(token);
-        }
-
-        let response = request
-            .send()
-            .await
-            .map_err(|e| LlmError::Network(e.to_string()))?;
+        let response = self
+            .authenticated_request(reqwest::Method::GET, "/health", None)
+            .await?;
 
         if response.status().is_success() {
             Ok(())
@@ -303,12 +338,8 @@ impl LlmProvider for LlmosProvider {
     }
 
     async fn cancel(&self, session_id: &str) -> Result<(), LlmError> {
-        let url = format!("{}/v1/chat/cancel/{}", self.base_url, session_id);
-        let mut request = self.client.delete(&url);
-        if let Some(token) = &self.api_key {
-            request = request.bearer_auth(token);
-        }
-        let _ = request.send().await;
+        let path = format!("/v1/chat/cancel/{}", session_id);
+        let _ = self.authenticated_request(reqwest::Method::DELETE, &path, None).await;
         Ok(())
     }
 

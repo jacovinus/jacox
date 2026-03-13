@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - 2026-03-04
 
 ### Added
+- **Dynamic Token Rotation (LLMOS)**: Implemented a cryptographically secure, rolling token handshake between Jacox and LLMOS.
+- **Provider Self-Healing**: Added automatic Master Key fallback for LLMOS providers to recover from network-induced token desynchronization.
+- **Skills Functionality**: New markdown-based interface for creating, fetching, and managing reusable AI skills.
 - **DuckDB Memory Inspection**: Added detailed breakdown of memory usage in the Dashboard with Monokai-styled progress bars.
 - **Database Purge**: New CLI command `database purge` and API endpoint `DELETE /sessions` to clear all data and reset sequences.
 - **Model Support**: Metadata example for `ministral-3:8b` model.

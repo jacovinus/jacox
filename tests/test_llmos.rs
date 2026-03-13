@@ -6,7 +6,7 @@ mod tests {
         LlmProvider,
     };
     use serde_json::json;
-    use wiremock::matchers::{body_json, method, path};
+    use wiremock::matchers::{method, path};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[tokio::test]
@@ -22,7 +22,8 @@ mod tests {
             tool_call_id: None,
         }];
 
-        let expected_body = json!({
+        // Verify request body if needed
+        let _expected_body = json!({
             "model": "phi-4",
             "messages": messages,
             "stream": false,
@@ -61,5 +62,48 @@ mod tests {
             .unwrap();
         assert_eq!(response.content, "Hi there!");
         assert_eq!(response.model, "phi-4");
+    }
+
+    #[tokio::test]
+    async fn test_llmos_token_rotation() {
+        let mock_server = MockServer::start().await;
+        let master_token = "master-key".to_string();
+        let provider = LlmosProvider::new(mock_server.uri(), "phi-4".to_string(), Some(master_token.clone()));
+
+        // 1. Initial request with master token, returns a rotating token
+        let next_token = "rotating-123";
+        Mock::given(method("POST"))
+            .and(path("/v1/chat/completions"))
+            .and(wiremock::matchers::header("Authorization", format!("Bearer {}", master_token).as_str()))
+            .respond_with(ResponseTemplate::new(200)
+                .insert_header("X-Next-Token", next_token)
+                .set_body_json(json!({
+                    "choices": [{"message": {"content": "First response"}}]
+                })))
+            .mount(&mock_server)
+            .await;
+
+        let messages = vec![Message {
+            role: "user".to_string(),
+            content: "Hello".to_string(),
+            tool_calls: None,
+            tool_call_id: None,
+        }];
+        
+        provider.chat(&messages, ChatOptions::default()).await.unwrap();
+
+        // 2. Second request should now use the rotating token
+        Mock::given(method("POST"))
+            .and(path("/v1/chat/completions"))
+            .and(wiremock::matchers::header("Authorization", format!("Bearer {}", next_token).as_str()))
+            .respond_with(ResponseTemplate::new(200)
+                .set_body_json(json!({
+                    "choices": [{"message": {"content": "Second response"}}]
+                })))
+            .mount(&mock_server)
+            .await;
+
+        let response = provider.chat(&messages, ChatOptions::default()).await.unwrap();
+        assert_eq!(response.content, "Second response");
     }
 }
