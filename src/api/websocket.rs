@@ -244,7 +244,9 @@ async fn handle_chat_message(
     if !search {
         // Filter out search tools if search is disabled
         tool_definitions.retain(|t| {
-            t.function.name != "internet_search" && t.function.name != "read_full_content"
+            t.function.name != "internet_search" 
+            && t.function.name != "read_full_content" 
+            && t.function.name != "read_url"
         });
     }
 
@@ -257,7 +259,7 @@ async fn handle_chat_message(
     };
 
     info!("Starting chat loop for session {:?}", session_id);
-    let loop_count = 0;
+    let mut loop_count = 0;
     let max_loops = 5;
 
     while loop_count < max_loops {
@@ -271,10 +273,10 @@ async fn handle_chat_message(
         let mut session_err_clone = session_err.clone();
 
         let stream_handle = tokio::spawn(async move {
-            if let Err(e) = llm_clone
+            let res = llm_clone
                 .chat_streaming(&messages_clone, options_clone, tx_stream)
-                .await
-            {
+                .await;
+            if let Err(ref e) = res {
                 error!("Stream error in chat loop: {:?}", e);
                 let err_resp = WsServerMessage {
                     r#type: "error".to_string(),
@@ -284,6 +286,7 @@ async fn handle_chat_message(
                     .text(serde_json::to_string(&err_resp).unwrap())
                     .await;
             }
+            res
         });
 
         let mut turn_content = String::new();
@@ -325,25 +328,100 @@ async fn handle_chat_message(
             .text(serde_json::to_string(&done_msg).unwrap())
             .await;
 
-        let _ = stream_handle.await;
+        let stream_result = stream_handle.await;
         info!("LLMOS stream worker joined for session {:?}", session_id);
 
-        // Check for tool calls (LLMOS currently doesn't support them in stream, so we check content if needed)
-        // For now, if we have content, we assume it's the final answer unless we find a tool call pattern.
-        // If the provider supports it, we'd check response.tool_calls here.
-        // Since LLMOS doesn't, we'll just persist and break.
+        let mut next_loop = false;
 
-        // Add assistant message to history
-        llm_messages.push(LlmMessage {
-            role: "assistant".to_string(),
-            content: turn_content.clone(),
-            tool_calls: None,
-            tool_call_id: None,
-        });
+        match stream_result {
+            Ok(Ok(Some(tool_calls))) => {
+                info!("Extracted {} tool calls from stream", tool_calls.len());
+                
+                // Strip the trailing JSON array from turn_content so it doesn't pollute the context
+                if let Some((_, clean_text)) = crate::llm::extract_streaming_tool_call(&turn_content) {
+                    turn_content = clean_text;
+                }
+                
+                // Add assistant message with tool calls to history
+                llm_messages.push(LlmMessage {
+                    role: "assistant".to_string(),
+                    content: turn_content.clone(),
+                    tool_calls: Some(tool_calls.clone()),
+                    tool_call_id: None,
+                });
 
-        // Check for simulated tool calls in content if necessary, or just break
-        break;
-        // loop_count += 1; // Increment if we implement tool-calling loop back
+                // Update DB with the tool calls
+                {
+                    let conn = pool.lock().unwrap();
+                    let _ = crate::db::service::DbService::insert_message(
+                        &conn,
+                        session_id,
+                        "assistant",
+                        &turn_content,
+                        Some(llm.name()),
+                        None,
+                        serde_json::json!({ "tool_calls": tool_calls }),
+                    );
+                }
+
+                // Execute tools
+                for tool_call in tool_calls {
+                    let tool_name = tool_call.function.name.clone();
+                    
+                    // Send status to UI
+                    let status_msg = WsServerMessage {
+                        r#type: "status".to_string(),
+                        content: format!("Running tool: {}...", tool_name),
+                    };
+                    let _ = session.text(serde_json::to_string(&status_msg).unwrap()).await;
+
+                    let tool_id = tool_call.id.clone().unwrap_or_else(|| Uuid::new_v4().to_string());
+                    let result = tools.call_tool(&tool_name, &tool_call.function.arguments, session_id, pool.clone()).await;
+                    
+                    llm_messages.push(LlmMessage {
+                        role: "tool".to_string(),
+                        content: result.clone(),
+                        tool_calls: None,
+                        tool_call_id: Some(tool_id.clone()),
+                    });
+
+                    // Persist tool result
+                    {
+                        let conn = pool.lock().unwrap();
+                        let _ = crate::db::service::DbService::insert_message(
+                            &conn,
+                            session_id,
+                            "tool",
+                            &result,
+                            None,
+                            None,
+                            serde_json::json!({ "tool_call_id": tool_id }),
+                        );
+                    }
+                }
+                next_loop = true;
+            }
+            Ok(Ok(None)) => {
+                // No tools, just a normal answer
+                llm_messages.push(LlmMessage {
+                    role: "assistant".to_string(),
+                    content: turn_content.clone(),
+                    tool_calls: None,
+                    tool_call_id: None,
+                });
+            }
+            Ok(Err(e)) => {
+                error!("Stream execution failed: {}", e);
+            }
+            Err(e) => {
+                error!("Task execution failed: {}", e);
+            }
+        }
+
+        if !next_loop {
+            break;
+        }
+        loop_count += 1;
     }
 }
 

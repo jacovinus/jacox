@@ -5,9 +5,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  // Prefer the rotated token if available for enhanced security
-  const rotatedToken = localStorage.getItem('jacox_rotated_token');
-  const apiKey = rotatedToken || localStorage.getItem('jacox_api_key') || 'sk-dev-key-123';
+  const apiKey = localStorage.getItem('jacox_api_key') || 'sk-dev-key-123';
   
   if (apiKey) {
     config.headers = config.headers || {};
@@ -18,26 +16,11 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
     (response) => {
-        // Capture the next token for rotation
-        const nextToken = response.headers['x-next-token'];
-        if (nextToken) {
-            localStorage.setItem('jacox_rotated_token', nextToken);
-        }
         return response;
     },
-    (error) => {
-        // Even on error, the server might have rotated the token
-        if (error.response?.headers?.['x-next-token']) {
-            localStorage.setItem('jacox_rotated_token', error.response.headers['x-next-token']);
-        }
-
+    async (error) => {
         if (!error.response) {
             console.error('Network Error / Backend Unreachable');
-        } else if (error.response.status === 401) {
-            // If we get an unauthorized error, the rotated token might be stale.
-            // Clear it to trigger a fallback to the static API key in the next request.
-            localStorage.removeItem('jacox_rotated_token');
-            console.warn('Rotated token stale or invalid. Clearing for fallback.');
         } else if (error.response.status >= 500) {
             console.error('Backend Server Error:', error.response.status);
         }

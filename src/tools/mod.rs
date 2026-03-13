@@ -1,5 +1,6 @@
 pub mod search;
 pub mod read_full_content;
+pub mod read_url;
 
 use async_trait::async_trait;
 use crate::llm::models::ToolDefinition;
@@ -20,6 +21,7 @@ impl ToolRegistry {
             tools: vec![
                 Box::new(search::SearchTool::new()),
                 Box::new(read_full_content::ReadFullContentTool::new()),
+                Box::new(read_url::ReadUrlTool::new()),
             ],
         }
     }

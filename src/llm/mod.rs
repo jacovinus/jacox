@@ -48,7 +48,7 @@ pub trait LlmProvider: Send + Sync {
         messages: &[Message],
         options: ChatOptions,
         tx: Sender<String>,
-    ) -> Result<(), LlmError>;
+    ) -> Result<Option<Vec<models::ToolCall>>, LlmError>;
 
     fn supported_models(&self) -> Vec<String>;
 
@@ -165,7 +165,7 @@ impl LlmProvider for ProviderManager {
         messages: &[Message],
         mut options: ChatOptions,
         tx: Sender<String>,
-    ) -> Result<(), LlmError> {
+    ) -> Result<Option<Vec<models::ToolCall>>, LlmError> {
         if let Some(model) = self.get_active_model_id() {
             options.model = Some(model);
         }
@@ -282,5 +282,111 @@ impl ProviderFactory {
 
     pub fn create_default(config: &AppConfig) -> Option<Arc<dyn LlmProvider>> {
         Some(Self::create_all(config))
+    }
+}
+
+/// Helper method to extract a JSON tool call array from a raw text stream buffer.
+/// It looks for `[{"name": "...", "arguments": ...}]` and returns the parsed ToolCall
+/// along with the remaining text before the JSON started.
+pub fn extract_streaming_tool_call(buffer: &str) -> Option<(Vec<models::ToolCall>, String)> {
+    let mut search_start = 0;
+    while let Some(start_pos) = buffer[search_start..].find('[') {
+        let absolute_start = search_start + start_pos;
+        let json_part = &buffer[absolute_start..];
+        
+        let mut bracket_count = 0;
+        let mut end_pos = None;
+        let mut in_string = false;
+        let mut escape_next = false;
+
+        for (i, c) in json_part.chars().enumerate() {
+            if escape_next {
+                escape_next = false;
+                continue;
+            }
+
+            match c {
+                '\\' => escape_next = true,
+                '"' => in_string = !in_string,
+                '[' if !in_string => bracket_count += 1,
+                ']' if !in_string => {
+                    bracket_count -= 1;
+                    if bracket_count == 0 {
+                        end_pos = Some(i + 1);
+                        break;
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        if let Some(len) = end_pos {
+            let potential_json = &json_part[..len];
+            if let Ok(parsed_functions) = serde_json::from_str::<Vec<serde_json::Value>>(potential_json) {
+                let mapped_tools: Vec<models::ToolCall> = parsed_functions.into_iter().filter_map(|f| {
+                    let func_obj = if f.get("function").is_some() { &f["function"] } else { &f };
+                    
+                    let name = func_obj.get("name")?.as_str()?.to_string();
+                    let args = if let Some(a) = func_obj.get("arguments") {
+                        if a.is_string() {
+                            a.as_str()?.to_string()
+                        } else {
+                            a.to_string()
+                        }
+                    } else {
+                        "{}".to_string()
+                    };
+                    
+                    Some(models::ToolCall {
+                        id: f.get("id").and_then(|id| id.as_str()).map(|s| s.to_string()),
+                        r#type: Some("function".to_string()),
+                        function: models::FunctionCall { name, arguments: args },
+                    })
+                }).collect();
+                
+                if !mapped_tools.is_empty() {
+                    let text_before = buffer[..absolute_start].trim().to_string();
+                    return Some((mapped_tools, text_before));
+                }
+            }
+        }
+        
+        // If we didn't find a valid tool call here, advance the search offset
+        search_start = absolute_start + 1;
+    }
+    None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_extract_streaming_tool_call_simple() {
+        let text = "Here is the search result.\n\n[{\"name\": \"internet_search\", \"arguments\": {\"query\": \"rust actix\"}}]";
+        let (tools, text_before) = extract_streaming_tool_call(text).unwrap();
+        
+        assert_eq!(tools.len(), 1);
+        assert_eq!(tools[0].function.name, "internet_search");
+        assert_eq!(tools[0].function.arguments, "{\"query\":\"rust actix\"}");
+        assert_eq!(text_before, "Here is the search result.");
+    }
+
+    #[test]
+    fn test_extract_streaming_tool_call_with_wrapper() {
+        let text = "Searching now...\n[{\"type\": \"function\", \"function\": {\"name\": \"test_tool\", \"arguments\": \"{}\"}}]";
+        let (tools, text_before) = extract_streaming_tool_call(text).unwrap();
+        
+        assert_eq!(tools.len(), 1);
+        assert_eq!(tools[0].function.name, "test_tool");
+        assert_eq!(tools[0].function.arguments, "{}");
+        assert_eq!(text_before, "Searching now...");
+    }
+
+    #[test]
+    fn test_extract_streaming_tool_call_incomplete() {
+        let text = "Searching...\n[{\"name\": \"test_tool\", \"arg";
+        let result = extract_streaming_tool_call(text);
+        assert!(result.is_none());
     }
 }

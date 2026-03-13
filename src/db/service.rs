@@ -196,11 +196,14 @@ impl DbService {
 
     pub fn get_messages(conn: &Connection, session_id: Uuid, limit: usize, offset: usize) -> DbResult<Vec<Message>> {
         let mut stmt = conn.prepare(
-            "SELECT id, session_id, role, content, model, token_count, CAST(created_at AS VARCHAR), metadata 
-             FROM messages 
-             WHERE session_id = ? 
-             ORDER BY created_at ASC 
-             LIMIT ? OFFSET ?"
+            "SELECT * FROM (
+                SELECT id, session_id, role, content, model, token_count, CAST(created_at AS VARCHAR) as created_at, metadata 
+                FROM messages 
+                WHERE session_id = ? 
+                ORDER BY created_at DESC 
+                LIMIT ? OFFSET ?
+             ) sub
+             ORDER BY created_at ASC"
         )?;
         
         let rows = stmt.query_map(params![session_id.to_string(), limit as i64, offset as i64], Self::row_to_message)?;
@@ -426,6 +429,66 @@ impl DbService {
     pub fn delete_skill(conn: &Connection, id: i64) -> DbResult<()> {
         conn.execute("DELETE FROM skills WHERE id = ?", params![id])?;
         Ok(())
+    }
+
+    pub fn preload_skills_from_dir(conn: &Connection, dir_path: &str) -> DbResult<usize> {
+        let mut count = 0;
+        if let Ok(entries) = std::fs::read_dir(dir_path) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_file() && path.extension().and_then(|e| e.to_str()) == Some("md") {
+                    if let Ok(content) = std::fs::read_to_string(&path) {
+                        let mut name = String::new();
+                        let mut tags = String::new();
+                        let mut in_frontmatter = false;
+
+                        for line in content.lines() {
+                            if line.starts_with("---") {
+                                if in_frontmatter {
+                                    in_frontmatter = false;
+                                } else if name.is_empty() {
+                                    in_frontmatter = true;
+                                }
+                                continue;
+                            }
+                            
+                            if in_frontmatter {
+                                if let Some(n) = line.strip_prefix("name: ") {
+                                    name = n.trim().to_string();
+                                } else if let Some(n) = line.strip_prefix("name:") {
+                                    name = n.trim().to_string();
+                                } else if let Some(t) = line.strip_prefix("tags: ") {
+                                    tags = t.trim().to_string();
+                                } else if let Some(t) = line.strip_prefix("tags:") {
+                                    tags = t.trim().to_string();
+                                }
+                            }
+                        }
+
+                        if name.is_empty() {
+                            if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
+                                name = stem.replace("_", " ");
+                                // Title case it basic
+                                name = name.chars().enumerate().map(|(i, c)| if i == 0 { c.to_ascii_uppercase() } else { c }).collect();
+                            } else {
+                                name = "Unnamed Skill".to_string();
+                            }
+                        }
+
+                        // Check if skill already exists by name
+                        let mut stmt = conn.prepare("SELECT count(*) FROM skills WHERE name = ?")?;
+                        let exists: i64 = stmt.query_row(params![name], |r| r.get(0))?;
+                        
+                        // We store the intact content (including frontmatter)
+                        if exists == 0 {
+                            Self::insert_skill(conn, &name, content.trim(), &tags, None)?;
+                            count += 1;
+                        }
+                    }
+                }
+            }
+        }
+        Ok(count)
     }
 
     pub fn query_raw(conn: &Connection, sql: &str) -> DbResult<crate::api::models::SqlQueryResponse> {

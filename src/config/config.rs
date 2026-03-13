@@ -103,7 +103,13 @@ impl AppConfig {
         }
         if let Some(ref mut llmos) = app_config.llm.llmos {
             if let Some(ref key) = llmos.api_key {
-                llmos.api_key = Some(expand_env(key));
+                let expanded = expand_env(key);
+                if expanded == "${LLMOS_API_KEY}" || expanded.is_empty() {
+                    // Fallback to the same default master_token defined in jac_llmos
+                    llmos.api_key = Some("sk-dev-key-123".to_string());
+                } else {
+                    llmos.api_key = Some(expanded);
+                }
             }
         }
 
@@ -114,7 +120,7 @@ impl AppConfig {
 fn expand_env(val: &str) -> String {
     if val.starts_with("${") && val.ends_with('}') {
         let var_name = &val[2..val.len() - 1];
-        std::env::var(var_name).unwrap_or_else(|_| "".to_string())
+        std::env::var(var_name).unwrap_or_else(|_| val.to_string())
     } else {
         val.to_string()
     }

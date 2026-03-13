@@ -172,7 +172,7 @@ impl LlmProvider for LlmosProvider {
         messages: &[Message],
         options: ChatOptions,
         tx: Sender<String>,
-    ) -> Result<(), LlmError> {
+    ) -> Result<Option<Vec<crate::llm::models::ToolCall>>, LlmError> {
         let model = options.model.as_deref().unwrap_or(&self.default_model);
 
         let mut final_messages: Vec<Message> = messages.to_vec();
@@ -211,6 +211,7 @@ impl LlmProvider for LlmosProvider {
 
         let mut stream = response.bytes_stream();
         let mut buffer = String::new();
+        let mut buffer_full = String::new();
 
         loop {
             let next_chunk =
@@ -242,7 +243,10 @@ impl LlmProvider for LlmosProvider {
                         "SSE Stream reached [DONE] signal for session {:?}",
                         options.user
                     );
-                    return Ok(());
+                    if let Some((tools, _)) = crate::llm::extract_streaming_tool_call(&buffer_full) {
+                        return Ok(Some(tools));
+                    }
+                    return Ok(None);
                 }
 
                 if line.starts_with("data: ") {
@@ -254,12 +258,16 @@ impl LlmProvider for LlmosProvider {
                                 "SSE Stream reached explicit done signal (type: done) for session {:?}",
                                 options.user
                             );
-                            return Ok(());
+                            if let Some((tools, _)) = crate::llm::extract_streaming_tool_call(&buffer_full) {
+                                return Ok(Some(tools));
+                            }
+                            return Ok(None);
                         }
 
                         if let Some(choices) = json["choices"].as_array() {
                             if let Some(choice) = choices.get(0) {
                                 if let Some(content) = choice["delta"]["content"].as_str() {
+                                    buffer_full.push_str(content);
                                     let _ = tx.send(content.to_string()).await;
                                 }
                                 if let Some(reason) = choice["finish_reason"].as_str() {
@@ -281,7 +289,10 @@ impl LlmProvider for LlmosProvider {
         if !final_line.is_empty() {
             if final_line == "data: [DONE]" || final_line.contains("[DONE]") {
                 info!("SSE Stream reached [DONE] in trailing data");
-                return Ok(());
+                if let Some((tools, _)) = crate::llm::extract_streaming_tool_call(&buffer_full) {
+                    return Ok(Some(tools));
+                }
+                return Ok(None);
             }
         }
 
@@ -289,7 +300,12 @@ impl LlmProvider for LlmosProvider {
             "LlmosProvider::chat_streaming loop finished naturally for session {:?}",
             options.user
         );
-        Ok(())
+        
+        if let Some((tools, _)) = crate::llm::extract_streaming_tool_call(&buffer_full) {
+            return Ok(Some(tools));
+        }
+        
+        Ok(None)
     }
 
     fn supported_models(&self) -> Vec<String> {

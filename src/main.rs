@@ -7,7 +7,7 @@ use jacox::db;
 use jacox::api::middleware::ApiKeyAuth;
 use jacox::llm::ProviderFactory;
 use jacox::cli::{commands::{Cli, Commands}, run_cli};
-use tracing::{error, info};
+use tracing::{error, info, warn};
 use std::path::PathBuf;
 
 async fn health(db: web::Data<jacox::db::DbPool>) -> impl Responder {
@@ -61,6 +61,14 @@ async fn main() -> std::io::Result<()> {
         }
     };
 
+    // Preload default skills from the skills directory on startup
+    if let Ok(conn) = db_pool.lock() {
+        match db::service::DbService::preload_skills_from_dir(&conn, "./skills") {
+            Ok(count) => info!("Preloaded {} skills from ./skills directory", count),
+            Err(e) => warn!("Failed to preload skills: {}", e),
+        }
+    }
+
     let llm_provider = match ProviderFactory::create_default(&config) {
         Some(p) => p,
         None => {
@@ -68,8 +76,6 @@ async fn main() -> std::io::Result<()> {
             std::process::exit(1);
         }
     };
-
-    let token_manager = web::Data::new(jacox::api::middleware::auth::TokenManager::new());
 
     let host = config.server.host.clone();
     let port = config.server.port;
@@ -81,14 +87,12 @@ async fn main() -> std::io::Result<()> {
             .allow_any_origin()
             .allow_any_method()
             .allow_any_header()
-            .expose_headers(vec!["x-next-token"])
             .max_age(3600);
 
         App::new()
             .app_data(web::Data::new(config.clone()))
             .app_data(web::Data::new(db_pool.clone()))
             .app_data(web::Data::new(llm_provider.clone()))
-            .app_data(token_manager.clone())
             .wrap(cors)
             .wrap(ApiKeyAuth)
             .service(

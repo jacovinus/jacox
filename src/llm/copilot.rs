@@ -3,7 +3,7 @@ use reqwest::Client;
 use serde_json::json;
 use tokio::sync::mpsc::Sender;
 
-use crate::llm::{models::{ChatOptions, ChatResponse, Message, Usage}, LlmError, LlmProvider};
+use crate::llm::{models::{ChatOptions, ChatResponse, Message, Usage, ToolCall}, LlmError, LlmProvider};
 
 pub struct CopilotProvider {
     client: Client,
@@ -104,7 +104,7 @@ impl LlmProvider for CopilotProvider {
         messages: &[Message],
         options: ChatOptions,
         tx: Sender<String>,
-    ) -> Result<(), LlmError> {
+    ) -> Result<Option<Vec<ToolCall>>, LlmError> {
         let model = options.model.as_deref().unwrap_or(&self.default_model);
 
         let mut body = json!({
@@ -167,7 +167,7 @@ impl LlmProvider for CopilotProvider {
             }
         }
 
-        Ok(())
+        Ok(None)
     }
 
     fn supported_models(&self) -> Vec<String> {

@@ -149,7 +149,7 @@ impl LlmProvider for OllamaProvider {
         messages: &[Message],
         options: ChatOptions,
         tx: Sender<String>,
-    ) -> Result<(), LlmError> {
+    ) -> Result<Option<Vec<ToolCall>>, LlmError> {
         let model = options.model.as_deref().unwrap_or(&self.default_model);
 
         let mut final_messages: Vec<Message> = messages.to_vec();
@@ -193,6 +193,8 @@ impl LlmProvider for OllamaProvider {
         let mut stream = response.bytes_stream();
         use futures_util::StreamExt;
         
+        let mut full_text = String::new();
+        
         while let Some(chunk) = stream.next().await {
             let bytes = chunk.map_err(|e| LlmError::Network(e.to_string()))?;
             if let Ok(text) = String::from_utf8(bytes.to_vec()) {
@@ -202,6 +204,7 @@ impl LlmProvider for OllamaProvider {
                     }
                     if let Ok(json) = serde_json::from_str::<serde_json::Value>(line) {
                         if let Some(content) = json["message"]["content"].as_str() {
+                            full_text.push_str(content);
                             let _ = tx.send(content.to_string()).await;
                         }
                     }
@@ -209,7 +212,11 @@ impl LlmProvider for OllamaProvider {
             }
         }
 
-        Ok(())
+        if let Some((tools, _)) = crate::llm::extract_streaming_tool_call(&full_text) {
+            return Ok(Some(tools));
+        }
+
+        Ok(None)
     }
 
     fn supported_models(&self) -> Vec<String> {

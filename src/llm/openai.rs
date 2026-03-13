@@ -114,7 +114,7 @@ impl LlmProvider for OpenAiProvider {
         messages: &[Message],
         options: ChatOptions,
         tx: Sender<String>,
-    ) -> Result<(), LlmError> {
+    ) -> Result<Option<Vec<ToolCall>>, LlmError> {
         let model = options.model.as_deref().unwrap_or(&self.default_model);
 
         let mut final_messages: Vec<Message> = messages.to_vec();
@@ -183,7 +183,7 @@ impl LlmProvider for OpenAiProvider {
             }
         }
 
-        Ok(())
+        Ok(None)
     }
 
     fn supported_models(&self) -> Vec<String> {

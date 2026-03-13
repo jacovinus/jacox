@@ -7,37 +7,10 @@ use std::{
     future::{ready, Future, Ready},
     pin::Pin,
     rc::Rc,
-    sync::{Arc, Mutex},
 };
-use tracing::{warn, debug};
-use uuid::Uuid;
+use tracing::warn;
 
-pub struct TokenManager {
-    current_token: Arc<Mutex<Option<String>>>,
-}
-
-impl TokenManager {
-    pub fn new() -> Self {
-        Self {
-            current_token: Arc::new(Mutex::new(None)),
-        }
-    }
-
-    pub fn validate(&self, token: &str) -> bool {
-        let guard = self.current_token.lock().unwrap();
-        match guard.as_deref() {
-            Some(t) => t == token,
-            None => false,
-        }
-    }
-
-    pub fn rotate(&self) -> String {
-        let new_token = Uuid::new_v4().to_string();
-        let mut guard = self.current_token.lock().unwrap();
-        *guard = Some(new_token.clone());
-        new_token
-    }
-}
+// TokenManager removed
 
 pub struct ApiKeyAuth;
 
@@ -99,16 +72,6 @@ where
             }
         };
 
-        let token_manager = match req.app_data::<web::Data<TokenManager>>() {
-            Some(tm) => tm,
-            None => {
-                warn!("TokenManager missing in app_data");
-                return Box::pin(async move {
-                    Err(actix_web::error::ErrorInternalServerError("Security configuration error"))
-                });
-            }
-        };
-
         let auth_header = req.headers().get("Authorization");
         
         let mut valid = false;
@@ -116,12 +79,8 @@ where
             if let Ok(auth_str) = header_value.to_str() {
                 if auth_str.starts_with("Bearer ") {
                     let token = &auth_str[7..];
-                    // Check against static keys OR the current rotated token
                     if config.auth.api_keys.iter().any(|key| key == token) {
                         valid = true;
-                    } else if token_manager.validate(token) {
-                        valid = true;
-                        debug!("Authenticated via rotated token");
                     }
                 }
             }
@@ -130,8 +89,6 @@ where
             let params = qstring::QString::from(query);
             if let Some(token) = params.get("api_key") {
                 if config.auth.api_keys.iter().any(|key| key == token) {
-                    valid = true;
-                } else if token_manager.validate(token) {
                     valid = true;
                 }
             }
@@ -143,17 +100,8 @@ where
             });
         }
 
-        let token_manager_clone = token_manager.clone();
         Box::pin(async move {
-            let mut res = srv.call(req).await?;
-            
-            // Generate next token and attach to response
-            let next_token = token_manager_clone.rotate();
-            res.headers_mut().insert(
-                actix_web::http::header::HeaderName::from_static("x-next-token"),
-                actix_web::http::header::HeaderValue::from_str(&next_token).unwrap()
-            );
-            
+            let res = srv.call(req).await?;
             Ok(res)
         })
     }
