@@ -48,6 +48,7 @@ pub struct CopilotConfig {
 pub struct LlmosConfig {
     pub base_url: String,
     pub default_model: String,
+    pub api_key: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -99,6 +100,11 @@ impl AppConfig {
         }
         if let Some(ref mut copilot) = app_config.llm.copilot {
             copilot.api_key = expand_env(&copilot.api_key);
+        }
+        if let Some(ref mut llmos) = app_config.llm.llmos {
+            if let Some(ref key) = llmos.api_key {
+                llmos.api_key = Some(expand_env(key));
+            }
         }
 
         Ok(app_config)

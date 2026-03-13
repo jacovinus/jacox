@@ -12,7 +12,8 @@ mod tests {
     #[tokio::test]
     async fn test_llmos_chat() {
         let mock_server = MockServer::start().await;
-        let provider = LlmosProvider::new(mock_server.uri(), "phi-4".to_string());
+        let token = "test-token".to_string();
+        let provider = LlmosProvider::new(mock_server.uri(), "phi-4".to_string(), Some(token.clone()));
 
         let messages = vec![Message {
             role: "user".to_string(),
@@ -25,12 +26,13 @@ mod tests {
             "model": "phi-4",
             "messages": messages,
             "stream": false,
-            "max_tokens": 100,
+            "max_tokens": 4096,
             "temperature": 0.7,
         });
 
         Mock::given(method("POST"))
             .and(path("/v1/chat/completions"))
+            .and(wiremock::matchers::header("Authorization", format!("Bearer {}", token).as_str()))
             .respond_with(ResponseTemplate::new(200).set_body_json(json!({
                 "id": "chatcmpl-123",
                 "object": "chat.completion",

@@ -247,6 +247,7 @@ impl ProviderFactory {
                 Arc::new(LlmosProvider::new(
                     cfg.base_url.clone(),
                     cfg.default_model.clone(),
+                    cfg.api_key.clone(),
                 )),
             );
         }

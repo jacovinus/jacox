@@ -114,9 +114,11 @@ export const Settings = () => {
                                                 <Github className="w-6 h-6 text-monokai-purple" />
                                             ) : (activeProvider?.id === 'ollama' ? (
                                                 <Zap className="w-6 h-6 text-monokai-orange" />
+                                            ) : (activeProvider?.id === 'llmos' ? (
+                                                <Cpu className="w-6 h-6 text-monokai-aqua" />
                                             ) : (
                                                 <Sparkles className="w-6 h-6 text-monokai-aqua" />
-                                            ))}
+                                            )))}
                                         </div>
                                         <div>
                                             <p className="text-xs text-gruv-light-4 font-mono uppercase">Active Manager</p>
@@ -190,7 +192,13 @@ export const Settings = () => {
                                         "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
                                         provider.active ? "bg-monokai-aqua/20 text-monokai-aqua" : "bg-gruv-dark-4 text-gruv-light-4 group-hover:text-gruv-light-1"
                                     )}>
-                                        {provider.id === 'copilot' ? <Github className="w-5 h-5" /> : <Zap className="w-5 h-5" />}
+                                        {provider.id === 'copilot' ? (
+                                            <Github className="w-5 h-5" />
+                                        ) : (provider.id === 'llmos' ? (
+                                            <Cpu className="w-5 h-5" />
+                                        ) : (
+                                            <Zap className="w-5 h-5" />
+                                        ))}
                                     </div>
                                     {provider.active && (
                                         <div className="w-6 h-6 rounded-full bg-monokai-aqua flex items-center justify-center">
@@ -201,7 +209,7 @@ export const Settings = () => {
                                 <div className="relative z-10">
                                     <p className="font-bold text-lg capitalize">{provider.id}</p>
                                     <p className="text-xs text-gruv-light-4 font-mono mt-1">
-                                        {provider.id === 'ollama' ? 'Local Compute' : 'Cloud Endpoint'}
+                                        {provider.id === 'ollama' || provider.id === 'llmos' ? 'Local Compute' : 'Cloud Endpoint'}
                                     </p>
                                 </div>
                                 {provider.active && (

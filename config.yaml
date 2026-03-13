@@ -36,6 +36,7 @@ llm:
   llmos:
     base_url: "http://127.0.0.1:3000"
     default_model: "mistral-7b"
+    api_key: "${LLMOS_API_KEY}"
 
 chat:
   max_history_messages: 50

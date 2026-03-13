@@ -14,10 +14,11 @@ pub struct LlmosProvider {
     client: Client,
     base_url: String,
     default_model: String,
+    api_key: Option<String>,
 }
 
 impl LlmosProvider {
-    pub fn new(base_url: String, default_model: String) -> Self {
+    pub fn new(base_url: String, default_model: String, api_key: Option<String>) -> Self {
         Self {
             client: Client::builder()
                 .timeout(std::time::Duration::from_secs(300))
@@ -25,6 +26,7 @@ impl LlmosProvider {
                 .unwrap_or_else(|_| Client::new()),
             base_url,
             default_model,
+            api_key,
         }
     }
 }
@@ -63,9 +65,15 @@ impl LlmProvider for LlmosProvider {
             "temperature": options.temperature.unwrap_or(0.7),
         });
 
-        let response = self
+        let mut request = self
             .client
-            .post(format!("{}/v1/chat/completions", self.base_url))
+            .post(format!("{}/v1/chat/completions", self.base_url));
+
+        if let Some(token) = &self.api_key {
+            request = request.bearer_auth(token);
+        }
+
+        let response = request
             .json(&body)
             .send()
             .await
@@ -124,9 +132,15 @@ impl LlmProvider for LlmosProvider {
             "temperature": options.temperature.unwrap_or(0.7),
         });
 
-        let response = self
+        let mut request = self
             .client
-            .post(format!("{}/v1/chat/completions", self.base_url))
+            .post(format!("{}/v1/chat/completions", self.base_url));
+
+        if let Some(token) = &self.api_key {
+            request = request.bearer_auth(token);
+        }
+
+        let response = request
             .json(&body)
             .send()
             .await
@@ -229,9 +243,15 @@ impl LlmProvider for LlmosProvider {
     }
 
     async fn discover_models(&self) -> Result<Vec<String>, LlmError> {
-        let response = self
+        let mut request = self
             .client
-            .get(format!("{}/v1/models", self.base_url))
+            .get(format!("{}/v1/models", self.base_url));
+
+        if let Some(token) = &self.api_key {
+            request = request.bearer_auth(token);
+        }
+
+        let response = request
             .send()
             .await
             .map_err(|e| LlmError::Network(e.to_string()))?;
@@ -259,9 +279,15 @@ impl LlmProvider for LlmosProvider {
     }
 
     async fn verify_connection(&self) -> Result<(), LlmError> {
-        let response = self
+        let mut request = self
             .client
-            .get(format!("{}/health", self.base_url))
+            .get(format!("{}/health", self.base_url));
+
+        if let Some(token) = &self.api_key {
+            request = request.bearer_auth(token);
+        }
+
+        let response = request
             .send()
             .await
             .map_err(|e| LlmError::Network(e.to_string()))?;
@@ -278,7 +304,11 @@ impl LlmProvider for LlmosProvider {
 
     async fn cancel(&self, session_id: &str) -> Result<(), LlmError> {
         let url = format!("{}/v1/chat/cancel/{}", self.base_url, session_id);
-        let _ = self.client.delete(&url).send().await;
+        let mut request = self.client.delete(&url);
+        if let Some(token) = &self.api_key {
+            request = request.bearer_auth(token);
+        }
+        let _ = request.send().await;
         Ok(())
     }
 
