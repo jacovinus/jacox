@@ -348,6 +348,18 @@ pub async fn get_stats(
     }
 }
 
+#[post("/query")]
+pub async fn query_sql(
+    pool: web::Data<DbPool>,
+    req: web::Json<crate::api::models::SqlQueryRequest>,
+) -> WebResult<HttpResponse> {
+    let conn = pool.lock().unwrap();
+    match DbService::query_raw(&conn, &req.sql) {
+        Ok(result) => Ok(HttpResponse::Ok().json(result)),
+        Err(e) => Ok(HttpResponse::BadRequest().body(e.to_string())),
+    }
+}
+
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/sessions")
@@ -363,4 +375,6 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
             .service(export_session)
             .service(import_session)
     );
+    
+    cfg.service(query_sql);
 }

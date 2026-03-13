@@ -64,6 +64,7 @@ export const Layout = () => {
                     <SidebarItem to="/" icon={LayoutDashboard}>Dashboard</SidebarItem>
                     <SidebarItem to="/chat" icon={MessageSquare}>Chat</SidebarItem>
                     <SidebarItem to="/database" icon={Database}>Database</SidebarItem>
+                    <SidebarItem to="/db-explorer" icon={Database}>SQL Explorer</SidebarItem>
                     <SidebarItem to="/skills" icon={BookOpen}>Skills</SidebarItem>
                     <SidebarItem to="/settings" icon={Settings}>Settings</SidebarItem>
                 </nav>

@@ -69,6 +69,8 @@ async fn main() -> std::io::Result<()> {
         }
     };
 
+    let token_manager = web::Data::new(jacox::api::middleware::auth::TokenManager::new());
+
     let host = config.server.host.clone();
     let port = config.server.port;
 
@@ -79,12 +81,14 @@ async fn main() -> std::io::Result<()> {
             .allow_any_origin()
             .allow_any_method()
             .allow_any_header()
+            .expose_headers(vec!["x-next-token"])
             .max_age(3600);
 
         App::new()
             .app_data(web::Data::new(config.clone()))
             .app_data(web::Data::new(db_pool.clone()))
             .app_data(web::Data::new(llm_provider.clone()))
+            .app_data(token_manager.clone())
             .wrap(cors)
             .wrap(ApiKeyAuth)
             .service(

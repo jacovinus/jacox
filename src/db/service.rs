@@ -427,4 +427,67 @@ impl DbService {
         conn.execute("DELETE FROM skills WHERE id = ?", params![id])?;
         Ok(())
     }
+
+    pub fn query_raw(conn: &Connection, sql: &str) -> DbResult<crate::api::models::SqlQueryResponse> {
+        let mut stmt = conn.prepare(sql)?;
+        let mut rows = stmt.query([])?;
+        
+        let mut col_names = Vec::new();
+        let mut results = Vec::new();
+
+        while let Some(row) = rows.next()? {
+            if col_names.is_empty() {
+                let stmt_ref = row.as_ref();
+                let col_count = stmt_ref.column_count();
+                for i in 0..col_count {
+                    col_names.push(stmt_ref.column_name(i).map(|s| s.to_string()).unwrap_or_else(|_| format!("col_{}", i)));
+                }
+            }
+
+            let mut row_obj = serde_json::Map::new();
+            for i in 0..col_names.len() {
+                let col_name = col_names[i].clone();
+                let value: duckdb::types::Value = row.get(i)?;
+                
+                let json_val = match value {
+                    duckdb::types::Value::Null => serde_json::Value::Null,
+                    duckdb::types::Value::Boolean(b) => serde_json::Value::Bool(b),
+                    duckdb::types::Value::TinyInt(v) => serde_json::Value::Number(v.into()),
+                    duckdb::types::Value::SmallInt(v) => serde_json::Value::Number(v.into()),
+                    duckdb::types::Value::Int(v) => serde_json::Value::Number(v.into()),
+                    duckdb::types::Value::BigInt(v) => serde_json::Value::Number(v.into()),
+                    duckdb::types::Value::HugeInt(v) => serde_json::Value::String(v.to_string()),
+                    duckdb::types::Value::UTinyInt(v) => serde_json::Value::Number(v.into()),
+                    duckdb::types::Value::USmallInt(v) => serde_json::Value::Number(v.into()),
+                    duckdb::types::Value::UInt(v) => serde_json::Value::Number(v.into()),
+                    duckdb::types::Value::UBigInt(v) => serde_json::Value::Number(v.into()),
+                    duckdb::types::Value::Float(v) => serde_json::Number::from_f64(v as f64).map(serde_json::Value::Number).unwrap_or(serde_json::Value::Null),
+                    duckdb::types::Value::Double(v) => serde_json::Number::from_f64(v).map(serde_json::Value::Number).unwrap_or(serde_json::Value::Null),
+                    duckdb::types::Value::Decimal(v) => serde_json::Value::String(v.to_string()),
+                    duckdb::types::Value::Timestamp(_, _) => {
+                        serde_json::Value::String(format!("{:?}", value))
+                    },
+                    duckdb::types::Value::Text(t) => serde_json::Value::String(t),
+                    duckdb::types::Value::Blob(b) => serde_json::Value::String(format!("blob({})", b.len())),
+                    _ => serde_json::Value::String(format!("{:?}", value)),
+                };
+                row_obj.insert(col_name, json_val);
+            }
+            results.push(serde_json::Value::Object(row_obj));
+        }
+
+        // Handle empty results by attempting to get metadata from the original statement.
+        // Since the statement was executed by `query()`, this might be safe now.
+        if col_names.is_empty() {
+             let count = stmt.column_count();
+             for i in 0..count {
+                 col_names.push(stmt.column_name(i).map(|s| s.to_string()).unwrap_or_else(|_| format!("col_{}", i)));
+             }
+        }
+
+        Ok(crate::api::models::SqlQueryResponse {
+            columns: col_names,
+            rows: results,
+        })
+    }
 }

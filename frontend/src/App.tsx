@@ -6,6 +6,7 @@ import { Chat } from './pages/Chat';
 import { Database } from './pages/Database';
 import { Settings } from './pages/Settings';
 import { Skills } from './pages/Skills';
+import DatabaseExplorer from './pages/DatabaseExplorer';
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ function App() {
             <Route path="chat" element={<Chat />} />
             <Route path="database" element={<Database />} />
             <Route path="skills" element={<Skills />} />
+            <Route path="db-explorer" element={<DatabaseExplorer />} />
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>

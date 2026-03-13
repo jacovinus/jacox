@@ -95,3 +95,14 @@ pub struct FetchUrlRequest {
     #[serde(default)]
     pub tags: String,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct SqlQueryRequest {
+    pub sql: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SqlQueryResponse {
+    pub columns: Vec<String>,
+    pub rows: Vec<serde_json::Value>, // Each row is a JSON object or array
+}
