@@ -83,9 +83,10 @@ const Pipelines: React.FC = () => {
     try {
       const res = await pipelinesApi.execute(selectedPipeline.id, executionQuestion);
       setExecutionResult(res);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Execution failed:', error);
-      setExecutionResult({ error: 'Failed to execute pipeline' });
+      const errorMsg = error.response?.data || error.message || 'Failed to execute pipeline';
+      setExecutionResult({ error: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg) });
     } finally {
       setExecuting(false);
     }

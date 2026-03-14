@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Health System**: Updated central health check logic to monitor `jac_llmos` availability.
 
 ### Fixed
+- **Detailed Execution Reporting**: The Pipeline Execution Modal now pulls the full error trace from the backend response, resolving the generic "Failed to execute pipeline" message.
 - **Middleware Compatibility**: Resolved issues with Bearer token vs X-API-Key resolution in the Actix-web auth layer.
 - **API Routing**: Standardized pipeline execution routes to ensure correct forwarding to the `jac_llmos` executor.
 
