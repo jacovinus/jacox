@@ -106,3 +106,28 @@ pub struct SqlQueryResponse {
     pub columns: Vec<String>,
     pub rows: Vec<serde_json::Value>, // Each row is a JSON object or array
 }
+#[derive(Debug, Deserialize)]
+pub struct PipelineRequest {
+    pub name: String,
+    pub definition: serde_json::Value,
+}
+
+#[derive(Debug, Serialize)]
+pub struct PipelineResponse {
+    pub id: i64,
+    pub name: String,
+    pub definition: serde_json::Value,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PipelineExecuteRequest {
+    pub question: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct LlmosStatusResponse {
+    pub online: bool,
+    pub message: String,
+}

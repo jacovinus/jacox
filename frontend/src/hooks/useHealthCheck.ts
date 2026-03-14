@@ -7,6 +7,7 @@ export interface HealthStatus {
     isOnline: boolean;
     apiConnected: boolean;
     dbConnected: boolean;
+    llmosConnected: boolean;
     isRetrying: boolean;
 }
 
@@ -15,20 +16,31 @@ export const useHealthCheck = (): HealthStatus => {
         isOnline: true,
         apiConnected: true,
         dbConnected: true,
+        llmosConnected: false,
         isRetrying: false,
     });
 
     useEffect(() => {
         const checkHealth = async () => {
             try {
-                // Use the configured API client so the Authorization header is included
+                // Check general health
                 const response = await api.get(HEALTH_CHECK_URL, { timeout: 2000 });
                 const data = response.data;
                 
+                // Check LLMOS specifically
+                let llmosConnected = false;
+                try {
+                    const llmosRes = await api.get('llmos/status', { timeout: 2000 });
+                    llmosConnected = llmosRes.data.online;
+                } catch (e) {
+                    console.warn("LLMOS heath check failed", e);
+                }
+
                 setStatus({
                     isOnline: true,
                     apiConnected: data.api === 'connected',
                     dbConnected: data.database === 'connected',
+                    llmosConnected,
                     isRetrying: false,
                 });
             } catch (error) {
@@ -36,6 +48,7 @@ export const useHealthCheck = (): HealthStatus => {
                     isOnline: false,
                     apiConnected: false,
                     dbConnected: false,
+                    llmosConnected: false,
                     isRetrying: true,
                 });
             }

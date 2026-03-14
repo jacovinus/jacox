@@ -99,3 +99,10 @@ pub struct McpToolDefinition {
     pub description: String,
     pub input_schema: serde_json::Value,
 }
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PipelineExecuteResult {
+    pub final_answer: String,
+    pub trace: Vec<String>,
+    pub tool_calls: Vec<serde_json::Value>,
+    pub intermediate_results: Vec<serde_json::Value>,
+}

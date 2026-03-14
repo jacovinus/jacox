@@ -73,6 +73,7 @@ where
         };
 
         let auth_header = req.headers().get("Authorization");
+        let x_api_key = req.headers().get("X-API-Key");
         
         let mut valid = false;
         if let Some(header_value) = auth_header {
@@ -82,6 +83,12 @@ where
                     if config.auth.api_keys.iter().any(|key| key == token) {
                         valid = true;
                     }
+                }
+            }
+        } else if let Some(header_value) = x_api_key {
+            if let Ok(key_str) = header_value.to_str() {
+                if config.auth.api_keys.iter().any(|key| key == key_str) {
+                    valid = true;
                 }
             }
         } else {

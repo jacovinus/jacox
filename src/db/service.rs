@@ -1,4 +1,4 @@
-use crate::db::models::{Message, Session, Skill, ToolResult};
+use crate::db::models::{Message, Session, Skill, ToolResult, Pipeline};
 use chrono::{DateTime, Utc};
 use duckdb::{params, params_from_iter, Connection, Result as DbResult, Row};
 use uuid::Uuid;
@@ -302,9 +302,11 @@ impl DbService {
             DROP TABLE IF EXISTS tool_results;
             DROP TABLE IF EXISTS sessions;
             DROP TABLE IF EXISTS skills;
+            DROP TABLE IF EXISTS pipelines;
             DROP SEQUENCE IF EXISTS seq_messages_id;
             DROP SEQUENCE IF EXISTS seq_tool_results_id;
             DROP SEQUENCE IF EXISTS seq_skills_id;
+            DROP SEQUENCE IF EXISTS seq_pipelines_id;
         ")?;
         
         conn.execute_batch(crate::db::connection::SCHEMA)
@@ -552,5 +554,118 @@ impl DbService {
             columns: col_names,
             rows: results,
         })
+    }
+
+    // --- Pipeline Operations ---
+
+    fn row_to_pipeline(row: &Row) -> DbResult<Pipeline> {
+        let def_str: String = row.get(2)?;
+        let definition = serde_json::from_str(&def_str).unwrap_or(serde_json::json!({}));
+
+        let created_val: duckdb::types::Value = row.get(3)?;
+        let updated_val: duckdb::types::Value = row.get(4)?;
+
+        let created_str = match created_val {
+            duckdb::types::Value::Text(s) => s,
+            _ => String::new(),
+        };
+        let updated_str = match updated_val {
+            duckdb::types::Value::Text(s) => s,
+            _ => String::new(),
+        };
+
+        let created_at = created_str.parse::<DateTime<Utc>>().unwrap_or_else(|_| Utc::now());
+        let updated_at = updated_str.parse::<DateTime<Utc>>().unwrap_or_else(|_| Utc::now());
+
+        Ok(Pipeline {
+            id: row.get(0)?,
+            name: row.get::<_, String>(1)?,
+            definition,
+            created_at,
+            updated_at,
+        })
+    }
+
+    pub fn insert_pipeline(
+        conn: &Connection,
+        name: &str,
+        definition: serde_json::Value,
+    ) -> DbResult<Pipeline> {
+        let def_str = definition.to_string();
+        conn.execute(
+            "INSERT INTO pipelines (name, definition) VALUES (?, ?)",
+            params![name, def_str],
+        )?;
+
+        let mut stmt = conn.prepare(
+            "SELECT id, name, CAST(definition AS VARCHAR), CAST(created_at AS VARCHAR), CAST(updated_at AS VARCHAR) 
+             FROM pipelines ORDER BY id DESC LIMIT 1"
+        )?;
+        let mut rows = stmt.query_map([], Self::row_to_pipeline)?;
+        Ok(rows.next().unwrap()?)
+    }
+
+    pub fn get_pipeline(conn: &Connection, id: i64) -> DbResult<Option<Pipeline>> {
+        let mut stmt = conn.prepare(
+            "SELECT id, name, CAST(definition AS VARCHAR), CAST(created_at AS VARCHAR), CAST(updated_at AS VARCHAR) 
+             FROM pipelines WHERE id = ?"
+        )?;
+        let mut rows = stmt.query_map(params![id], Self::row_to_pipeline)?;
+        if let Some(row) = rows.next() {
+            Ok(Some(row?))
+        } else {
+            Ok(None)
+        }
+    }
+
+    pub fn list_pipelines(conn: &Connection, limit: usize, offset: usize) -> DbResult<Vec<Pipeline>> {
+        let mut stmt = conn.prepare(
+            "SELECT id, name, CAST(definition AS VARCHAR), CAST(created_at AS VARCHAR), CAST(updated_at AS VARCHAR) 
+             FROM pipelines ORDER BY updated_at DESC LIMIT ? OFFSET ?"
+        )?;
+        let rows = stmt.query_map(params![limit as i64, offset as i64], Self::row_to_pipeline)?;
+        let mut pipelines = Vec::new();
+        for row in rows {
+            pipelines.push(row?);
+        }
+        Ok(pipelines)
+    }
+
+    pub fn update_pipeline(
+        conn: &Connection,
+        id: i64,
+        name: Option<String>,
+        definition: Option<serde_json::Value>,
+    ) -> DbResult<Option<Pipeline>> {
+        let mut updates = Vec::new();
+        let mut params_vec: Vec<Box<dyn duckdb::ToSql>> = Vec::new();
+
+        if let Some(n) = name {
+            updates.push("name = ?");
+            params_vec.push(Box::new(n));
+        }
+        if let Some(d) = definition {
+            updates.push("definition = ?");
+            params_vec.push(Box::new(d.to_string()));
+        }
+
+        if updates.is_empty() {
+            return Self::get_pipeline(conn, id);
+        }
+
+        updates.push("updated_at = CURRENT_TIMESTAMP");
+
+        let sql = format!("UPDATE pipelines SET {} WHERE id = ?", updates.join(", "));
+        params_vec.push(Box::new(id));
+
+        let params_refs: Vec<&dyn duckdb::ToSql> = params_vec.iter().map(|b| b.as_ref()).collect();
+        conn.execute(&sql, params_from_iter(params_refs))?;
+
+        Self::get_pipeline(conn, id)
+    }
+
+    pub fn delete_pipeline(conn: &Connection, id: i64) -> DbResult<()> {
+        conn.execute("DELETE FROM pipelines WHERE id = ?", params![id])?;
+        Ok(())
     }
 }

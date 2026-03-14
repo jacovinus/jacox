@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-03-14
+
+### Added
+- **Cognitive Pipelines Integration**: Full end-to-end support for multi-stage reasoning workflows.
+- **Pluggable Architecture**: Implemented `jac_llmos` as an optional, pluggable tool. The UI now gracefully handles service connectivity states, hiding or graying out features when disconnected.
+- **Pipeline Hub (Frontend)**: A new premium, glassmorphic page for managing pipelines with:
+  - Real-time connectivity monitoring.
+  - Interactive JSON Inspector for pipeline definitions.
+  - Creation Modal with live validation.
+  - Live Execution Modal featuring a **Real-time Reasoning Trace Viewer**.
+- **Enhanced Authentication**: Updated `ApiKeyAuthMiddleware` to support `X-API-Key` headers, enabling secure cross-service communication.
+- **Persistent Pipelines**: Added DuckDB persistence for pipeline definitions in the backend service.
+
+### Changed
+- **LlmProvider Extensions**: Extended the `LlmProvider` trait with `execute_pipeline` to support structured workflow orchestration.
+- **Health System**: Updated central health check logic to monitor `jac_llmos` availability.
+
+### Fixed
+- **Middleware Compatibility**: Resolved issues with Bearer token vs X-API-Key resolution in the Actix-web auth layer.
+- **API Routing**: Standardized pipeline execution routes to ensure correct forwarding to the `jac_llmos` executor.
+
 ## [0.2.0] - 2026-03-13
 
 ### Added

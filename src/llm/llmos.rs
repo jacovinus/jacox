@@ -411,6 +411,37 @@ impl LlmProvider for LlmosProvider {
         Ok(results)
     }
 
+    async fn execute_pipeline(
+        &self,
+        pipeline: serde_json::Value,
+        question: String,
+    ) -> Result<crate::llm::models::PipelineExecuteResult, LlmError> {
+        let body = json!({
+            "pipeline": pipeline,
+            "question": question
+        });
+
+        let response = self
+            .authenticated_request(reqwest::Method::POST, "/v1/pipelines/execute", Some(body))
+            .await?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let text = response.text().await.unwrap_or_default();
+            return Err(LlmError::Api(format!("LLMOS Pipeline Error {}: {}", status, text)));
+        }
+
+        let json: serde_json::Value = response
+            .json()
+            .await
+            .map_err(|e| LlmError::Network(e.to_string()))?;
+
+        let result: crate::llm::models::PipelineExecuteResult = serde_json::from_value(json)
+            .map_err(|e| LlmError::Api(format!("Failed to parse pipeline result: {}", e)))?;
+
+        Ok(result)
+    }
+
     fn default_model(&self) -> String {
         self.default_model.clone()
     }

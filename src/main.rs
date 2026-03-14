@@ -101,6 +101,7 @@ async fn main() -> std::io::Result<()> {
                     .configure(jacox::api::routes::configure)
                     .configure(jacox::api::config_routes::configure)
                     .configure(jacox::api::skills_routes::configure)
+                    .configure(jacox::api::pipeline_routes::configure)
                     .service(jacox::api::routes_openai::openai_chat_completions)
             )
             .configure(jacox::api::websocket::configure)

@@ -42,3 +42,12 @@ pub struct Skill {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Pipeline {
+    pub id: i64,
+    pub name: String,
+    pub definition: serde_json::Value,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}

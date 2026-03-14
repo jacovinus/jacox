@@ -9,6 +9,7 @@ import { Skills } from './pages/Skills';
 import McpTools from './pages/McpTools';
 import ReasoningPlayground from './pages/ReasoningPlayground';
 import DatabaseExplorer from './pages/DatabaseExplorer';
+import Pipelines from './pages/Pipelines';
 
 
 const queryClient = new QueryClient();
@@ -25,8 +26,8 @@ function App() {
             <Route path="skills" element={<Skills />} />
             <Route path="mcp-tools" element={<McpTools />} />
             <Route path="reasoning" element={<ReasoningPlayground />} />
+            <Route path="pipelines" element={<Pipelines />} />
             <Route path="db-explorer" element={<DatabaseExplorer />} />
-
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>

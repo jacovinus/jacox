@@ -66,8 +66,33 @@ export interface SystemStats {
 }
 
 export interface ProviderInfo {
-    id: string;
-    active: boolean;
-    supported_models: string[];
-    status: 'online' | 'offline' | 'unverified';
+  id: string;
+  active: boolean;
+  supported_models: string[];
+  status: 'online' | 'offline' | 'unverified';
+}
+
+export interface Pipeline {
+  id: number;
+  name: string;
+  definition: {
+    stages: Array<{
+      stage_type: string;
+      config: Record<string, any>;
+    }>;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PipelineExecuteResult {
+  final_answer: string;
+  trace: string[];
+  tool_calls: any[];
+  intermediate_results: any[];
+}
+
+export interface LlmosStatus {
+  online: boolean;
+  message: string;
 }

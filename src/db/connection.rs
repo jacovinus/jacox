@@ -51,6 +51,16 @@ CREATE TABLE IF NOT EXISTS skills (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE SEQUENCE IF NOT EXISTS seq_pipelines_id;
+
+CREATE TABLE IF NOT EXISTS pipelines (
+    id BIGINT PRIMARY KEY DEFAULT nextval('seq_pipelines_id'),
+    name VARCHAR NOT NULL,
+    definition JSON NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 "#;
 
 pub fn get_connection(config: &DatabaseConfig) -> DbResult<DbPool> {

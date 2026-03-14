@@ -23,10 +23,11 @@ Jacox isn't just a server; it's a sleek, dark-mode experience inspired by the **
 ## ⚡ Technical Excellence
 - **Rust Core**: Blazing fast, memory-safe execution using Actix-web.
 - **DuckDB Storage**: Analytical conversation memory in a single file (`chat.db`). [Learn more](FEATURES_GUIDE.md#2-local-memory-layer-duckdb-)
-- **Pluggable Intelligence**: Seamlessly switch between **OpenAI**, **Anthropic**, **Ollama**, and **GitHub Copilot**. 
+- **Pluggable Intelligence**: Seamlessly switch between **OpenAI**, **Anthropic**, **Ollama**, **GitHub Copilot**, and the optional **LLMOS Cognitive Engine**.
 - **Chained Request Security**: Rolling handshake protection for internal LLMOS communication, preventing replay attacks.
 - **Internet Search**: Built-in scraper tool for real-world data fetching. [Learn more](FEATURES_GUIDE.md#7-internet-search-tool-)
 - **Reasoning Graph Engine**: Build and visualize multi-step plans with an interactive DAG-based engine and parallel node execution.
+- **Cognitive Pipelines**: Deterministic, multi-stage reasoning workflows. Orchestrate complex tasks like DB analysis, verification, and synthesis in a structured pipeline.
 - **MCP Tool Registry**: Integrated Model Context Protocol support for tool discovery and schema management.
 - **Real-Time Dashboard**: High-fidelity telemetry for tokens, messages, and storage.
 - **Memory Profiling**: Detailed **DuckDB Memory Breakdown** with visual profiling.
@@ -84,6 +85,13 @@ Switch providers and models on the fly without restarting the server. The dynami
 Manage your Jacox API keys and monitor your provider fleet (OpenAI, Anthropic, Ollama, Copilot) from a centralized, real-time dashboard.
 
 ![Settings Interface](static/screenshots/settings.png)
+
+### 🧠 Cognitive Pipelines
+Build and execute structured AI workflows with deterministic stages. Monitor every step of the reasoning process through the live **Trace Viewer**.
+
+- **Multi-Stage Orchestration**: Combine LLM generation, MCP tool calls, and automated verification.
+- **Deep Visibility**: See exactly how the AI arrived at an answer with granular trace logs.
+- **Pluggable Integration**: Connect your local `jac_llmos` instance to unlock advanced reasoning.
 
 ### 📦 Lifecycle Management
 - **Database Purge**: Clear all data instantly via `cargo run -- database purge` or API. [See Changelog](CHANGELOG.md)

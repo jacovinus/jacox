@@ -9,7 +9,8 @@ import {
     Cpu,
     BookOpen,
     Wrench,
-    Zap
+    Zap,
+    Workflow
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -42,7 +43,7 @@ import { DisconnectedOverlay } from './DisconnectedOverlay';
 import { ProviderSelector } from './ProviderSelector';
 
 export const Layout = () => {
-    const { isOnline, apiConnected, dbConnected, isRetrying } = useHealthCheck();
+    const { isOnline, apiConnected, dbConnected, llmosConnected, isRetrying } = useHealthCheck();
 
     return (
         <div className="flex h-screen bg-gruv-dark-1 text-gruv-light-1 overflow-hidden font-sans">
@@ -68,8 +69,16 @@ export const Layout = () => {
                     <SidebarItem to="/database" icon={Database}>Database</SidebarItem>
                     <SidebarItem to="/db-explorer" icon={Database}>SQL Explorer</SidebarItem>
                     <SidebarItem to="/skills" icon={BookOpen}>Skills</SidebarItem>
-                    <SidebarItem to="/mcp-tools" icon={Wrench}>MCP Tools</SidebarItem>
-                    <SidebarItem to="/reasoning" icon={Zap}>Reasoning</SidebarItem>
+                    
+                    {llmosConnected && (
+                        <>
+                            <div className="h-px bg-gruv-dark-4/30 my-2 mx-4" />
+                            <SidebarItem to="/mcp-tools" icon={Wrench}>MCP Tools</SidebarItem>
+                            <SidebarItem to="/reasoning" icon={Zap}>Reasoning</SidebarItem>
+                            <SidebarItem to="/pipelines" icon={Workflow}>Pipelines</SidebarItem>
+                        </>
+                    )}
+                    
                     <SidebarItem to="/settings" icon={Settings}>Settings</SidebarItem>
                 </nav>
 
@@ -96,6 +105,18 @@ export const Layout = () => {
                             isOnline && dbConnected ? "text-monokai-aqua" : "text-monokai-orange"
                         )}>
                             DB: {isOnline && dbConnected ? "Online" : "Offline"}
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className={cn(
+                            "w-1.5 h-1.5 rounded-full animate-pulse",
+                            isOnline && llmosConnected ? "bg-monokai-orange" : "bg-gruv-dark-4"
+                        )} />
+                        <span className={cn(
+                            "text-[10px] font-mono uppercase tracking-wider",
+                            isOnline && llmosConnected ? "text-monokai-orange" : "text-gruv-gray"
+                        )}>
+                            LLMOS: {isOnline && llmosConnected ? "Online" : "Offline"}
                         </span>
                     </div>
                 </div>

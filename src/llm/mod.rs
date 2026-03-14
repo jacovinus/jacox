@@ -82,6 +82,14 @@ pub trait LlmProvider: Send + Sync {
     ) -> Result<HashMap<String, serde_json::Value>, LlmError> {
         Err(LlmError::Api("Reasoning not supported by this provider".to_string()))
     }
+
+    async fn execute_pipeline(
+        &self,
+        _pipeline: serde_json::Value,
+        _question: String,
+    ) -> Result<models::PipelineExecuteResult, LlmError> {
+        Err(LlmError::Api("Pipelines not supported by this provider".to_string()))
+    }
 }
 
 
@@ -203,6 +211,14 @@ impl LlmProvider for ProviderManager {
         graph: models::ReasoningGraph,
     ) -> Result<HashMap<String, serde_json::Value>, LlmError> {
         self.get_active_provider().execute_reasoning(graph).await
+    }
+
+    async fn execute_pipeline(
+        &self,
+        pipeline: serde_json::Value,
+        question: String,
+    ) -> Result<models::PipelineExecuteResult, LlmError> {
+        self.get_active_provider().execute_pipeline(pipeline, question).await
     }
 
     fn default_model(&self) -> String {
