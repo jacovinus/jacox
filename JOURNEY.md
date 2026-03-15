@@ -6,6 +6,8 @@ This document serves as the project's roadmap and "travel journal," documenting 
 
 ## ✅ Recent Milestones (Completed)
 
+- **Reasoning Playground UI**: High-fidelity, draggable DAG editor with 450px inspector and formatted results.
+- **SSE Streaming Reasoning**: End-to-end real-time execution feedback for complex graphs.
 - **Cognitive Pipelines Engine**: Multi-stage reasoning with deterministic execution.
 - **Glassmorphic UI overhaul**: Premium dark-mode dashboard and live reasoning traces.
 - **DuckDB Snapshotting**: Non-blocking analytical access to live production data.

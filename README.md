@@ -24,8 +24,8 @@ Jacox isn't just a server; it's a sleek, glassmorphic experience inspired by the
 - **Pluggable Intelligence**: Seamlessly switch between **OpenAI**, **Anthropic**, **Ollama**, **GitHub Copilot**, and the optional **LLMOS Cognitive Engine**.
 - **Chained Request Security**: Rolling handshake protection for internal LLMOS communication, preventing replay attacks.
 - **DuckDB Snapshotting**: Non-blocking analytical access to live data. [Learn more](FEATURES_GUIDE.md#12-live-data-analyst-snapshot-mode)
-- **Reasoning Graph Engine**: Build and visualize multi-step plans with an interactive DAG-based engine and parallel node execution.
-- **Cognitive Pipelines**: Deterministic, multi-stage reasoning workflows. Orchestrate complex tasks like DB analysis, verification, and synthesis.
+- **Reasoning Graph Engine**: A powerful DAG-based architecture with **Server-Sent Events (SSE)** for real-time node lifecycle tracking.
+- **Cognitive Pipelines**: Structured, deterministic workflows with multi-stage reasoning, MCP integration, and **incremental result streaming**.
 - **MCP Tool Registry**: Integrated Model Context Protocol support for tool discovery and schema management.
 - **Real-Time Dashboard**: High-fidelity telemetry for tokens, messages, and storage.
 - **Node 24 & React 19**: Modern frontend stack for maximum response times and security.

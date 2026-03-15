@@ -369,6 +369,33 @@ pub async fn execute_reasoning(
     }
 }
 
+#[post("/llm/reasoning/execute/stream")]
+pub async fn execute_reasoning_stream(
+    llm: web::Data<Arc<dyn LlmProvider>>,
+    graph: web::Json<crate::llm::models::ReasoningGraph>,
+) -> WebResult<HttpResponse> {
+    let (tx, mut rx) = tokio::sync::mpsc::channel(100);
+    let llm_clone = llm.get_ref().clone();
+    let graph_inner = graph.into_inner();
+
+    tokio::spawn(async move {
+        if let Err(e) = llm_clone.execute_reasoning_streaming(graph_inner, tx).await {
+            tracing::error!("Reasoning stream error: {}", e);
+        }
+    });
+
+    let stream = async_stream::stream! {
+        while let Some(value) = rx.recv().await {
+            let data = format!("data: {}\n\n", serde_json::to_string(&value).unwrap());
+            yield Ok::<bytes::Bytes, actix_web::Error>(bytes::Bytes::from(data));
+        }
+    };
+
+    Ok(HttpResponse::Ok()
+        .content_type("text/event-stream")
+        .streaming(stream))
+}
+
 #[post("/query")]
 pub async fn query_sql(
     pool: web::Data<DbPool>,
@@ -401,5 +428,6 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(query_sql);
     cfg.service(list_mcp_tools);
     cfg.service(execute_reasoning);
+    cfg.service(execute_reasoning_stream);
 }
 

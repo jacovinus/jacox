@@ -118,7 +118,21 @@ LLMOS can analyze your active `chat.db` without causing locks or latency in your
 
 ---
 
-## 11. Pluggable Infrastructure 🔌
+## 11. Reasoning Playground (Advanced DAG) 🛰️
+The Reasoning Playground is a high-fidelity editor for building ad-hoc AI agents. Unlike the deterministic pipelines, the playground allows for free-form graph sketching.
+
+### 🎯 Key Interactive Features
+- **Draggable Canvas**: Use the SVG-based board to position your reasoning nodes (LLM, MCP, DB Query).
+- **Dynamic Connections**: Click and drag between nodes to establish data flow.
+- **Variable Injection**: Any node can reference another via `{{node_id.output}}`.
+- **Live Execution Feedback**: Watch nodes light up in **Orange (Running)**, **Green (Success)**, or **Pink (Error)** as the backend executor traverses the graph.
+- **SSE Streaming**: Full implementation of Server-Sent Events ensures that you see the results of each node as they happen, without waiting for the entire graph to complete.
+- **Enhanced Execution Log**: A vertical, scrollable log provides high-bandwidth feedback for complex outputs.
+- **Node Inspector & Formatted Results**: A dedicated 450px sidebar allows for deep inspection of JSON or text results with syntax-aware formatting.
+
+---
+
+## 12. Pluggable Infrastructure 🔌
 Jacox is designed to work with or without `jac_llmos`. 
 - **Standalone**: All standard chat and search features work.
 - **Integrated**: Connect `jac_llmos` to unlock the **Pipelines Hub**, **Reasoning Graphs**, and **Advanced MCP tools**.

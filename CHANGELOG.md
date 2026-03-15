@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-03-15
+
+### Added
+- **SSE Streaming Reasoning**: Implemented end-to-end Server-Sent Events (SSE) support for the Reasoning Playground.
+- **Enhanced Execution Log**: Replaced the small results grid with a vertical, scrollable execution log for high-bandwidth feedback.
+- **Sidebar Revamp**: Expanded the Node Inspector to 450px and added a dedicated formatting viewer for execution results (JSON/Text).
+- **Stream Proxy**: Added an Actix-web proxy to bridge SSE requests from the frontend to the `jac_llmos` engine.
+
+### Fixed
+- **Trace Visibility**: Resolved issues where large reasoning outputs were truncated in the UI.
+- **Node Selection UX**: Optimized the inspector layout to show status, configuration, and results in a structured single-column view.
+
+## [0.3.1] - 2026-03-15
+
+### Added
+- **Interactive Reasoning Playground**: Completely overhauled the placeholder component into a production-ready graph editor.
+- **Draggable DAG Canvas**: Added a high-performance SVG-based canvas with `framer-motion` for drag-and-drop node orchestration.
+- **Dynamic Node Editor**: Integrated a sidebar with live JSON payload editing and connection management.
+- **Visual Execution Trace**: Real-time status indicators (pending/running/success) at the node level during execution.
+
+### Fixed
+- **Variable Resolution**: Frontend now correctly supports `{{node_id.output}}` syntax for chaining reasoning outputs.
+- **API Synchronization**: Aligned the playground with the latest `jac_llmos` Reasoning Engine specification.
+
 ## [0.3.0] - 2026-03-14
 
 ### Added

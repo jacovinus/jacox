@@ -411,6 +411,53 @@ impl LlmProvider for LlmosProvider {
         Ok(results)
     }
 
+    async fn execute_reasoning_streaming(
+        &self,
+        graph: crate::llm::models::ReasoningGraph,
+        tx: Sender<serde_json::Value>,
+    ) -> Result<(), LlmError> {
+        let body = json!({
+            "graph": graph
+        });
+
+        let response = self
+            .authenticated_request(reqwest::Method::POST, "/v1/reasoning/execute/stream", Some(body))
+            .await?;
+
+        if !response.status().is_success() {
+            let status = response.status();
+            let text = response.text().await.unwrap_or_default();
+            return Err(LlmError::Api(format!("LLMOS Reasoning Stream Error {}: {}", status, text)));
+        }
+
+        let mut stream = response.bytes_stream();
+        let mut buffer = String::new();
+
+        while let Some(chunk_result) = stream.next().await {
+            let chunk = chunk_result.map_err(|e| LlmError::Network(e.to_string()))?;
+            let chunk_str = String::from_utf8_lossy(&chunk);
+            buffer.push_str(&chunk_str);
+
+            while let Some(line_end) = buffer.find('\n') {
+                let line = buffer[..line_end].trim().to_string();
+                buffer.drain(..=line_end);
+
+                if line.is_empty() {
+                    continue;
+                }
+
+                if line.starts_with("data: ") {
+                    let data = &line[6..];
+                    if let Ok(json) = serde_json::from_str::<serde_json::Value>(data) {
+                        let _ = tx.send(json).await;
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
     async fn execute_pipeline(
         &self,
         pipeline: serde_json::Value,
