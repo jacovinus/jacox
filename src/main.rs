@@ -1,4 +1,4 @@
-use actix_files::NamedFile;
+
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use actix_cors::Cors;
 use clap::Parser;
@@ -27,10 +27,6 @@ async fn health(db: web::Data<jacox::db::DbPool>) -> impl Responder {
     }))
 }
 
-async fn index() -> impl Responder {
-    let path: PathBuf = "./frontend/dist/index.html".into();
-    NamedFile::open(path)
-}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -105,12 +101,6 @@ async fn main() -> std::io::Result<()> {
                     .service(jacox::api::routes_openai::openai_chat_completions)
             )
             .configure(jacox::api::websocket::configure)
-            // Serve static files AFTER the /api scope to avoid overshadowing it
-            .service(
-                actix_files::Files::new("/", "./frontend/dist")
-                    .index_file("index.html")
-                    .default_handler(web::get().to(index))
-            )
     })
     .bind((host, port))?
     .run()

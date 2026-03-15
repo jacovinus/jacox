@@ -7,35 +7,45 @@
 ---
 
 ## 🎨 A World-Class Aesthetic
-Jacox isn't just a server; it's a sleek, dark-mode experience inspired by the **Monokai-Gruvbox** palette. 
+Jacox isn't just a server; it's a sleek, glassmorphic experience inspired by the **Monokai-Gruvbox** palette. 
 
 - **Live CSS & HTML Rendering**: Inject active styles and raw HTML directly into chat for interactive demos.
 - **Rich Markdown Rendering**: Full GFM support with optimized syntax highlighting.
-- **High-Fidelity Charts**: Interactive **Line** and **Bar** charts with sub-micro granularity. [Learn more](FEATURES_GUIDE.md#8-high-fidelity-data-visualization-charts-)
+- **High-Fidelity Charts**: Interactive **Line** and **Bar** charts with sub-micro granularity. [Learn more](FEATURES_GUIDE.md#8-high-fidelity-data-visualization-charts)
 - **Live SVGs**: Dynamic graphic rendering directly in the chat.
 - **Micro-animations**: A fluid, responsive interface with real-time **Thinking & Searching** status.
 - **Process Cancellation**: Instantly stop any long-running generation or search.
-
-![Chat with Live CSS](static/screenshots/chat.png)
 
 ---
 
 ## ⚡ Technical Excellence
 - **Rust Core**: Blazing fast, memory-safe execution using Actix-web.
-- **DuckDB Storage**: Analytical conversation memory in a single file (`chat.db`). [Learn more](FEATURES_GUIDE.md#2-local-memory-layer-duckdb-)
+- **DuckDB Storage**: Analytical conversation memory in a single file (`chat.db`). [Learn more](FEATURES_GUIDE.md#2-local-memory-layer-duckdb)
 - **Pluggable Intelligence**: Seamlessly switch between **OpenAI**, **Anthropic**, **Ollama**, **GitHub Copilot**, and the optional **LLMOS Cognitive Engine**.
 - **Chained Request Security**: Rolling handshake protection for internal LLMOS communication, preventing replay attacks.
-- **Internet Search**: Built-in scraper tool for real-world data fetching. [Learn more](FEATURES_GUIDE.md#7-internet-search-tool-)
+- **DuckDB Snapshotting**: Non-blocking analytical access to live data. [Learn more](FEATURES_GUIDE.md#12-live-data-analyst-snapshot-mode)
 - **Reasoning Graph Engine**: Build and visualize multi-step plans with an interactive DAG-based engine and parallel node execution.
-- **Cognitive Pipelines**: Deterministic, multi-stage reasoning workflows. Orchestrate complex tasks like DB analysis, verification, and synthesis in a structured pipeline.
+- **Cognitive Pipelines**: Deterministic, multi-stage reasoning workflows. Orchestrate complex tasks like DB analysis, verification, and synthesis.
 - **MCP Tool Registry**: Integrated Model Context Protocol support for tool discovery and schema management.
 - **Real-Time Dashboard**: High-fidelity telemetry for tokens, messages, and storage.
-- **Memory Profiling**: Detailed **DuckDB Memory Breakdown** with visual profiling.
 - **Node 24 & React 19**: Modern frontend stack for maximum response times and security.
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quick Start: Cognitive Pipelines
+
+Cognitive Pipelines are the core of Jacox's automated reasoning. Here is how to get started in 3 steps:
+
+1. **Enable LLMOS**: Ensure `jac_llmos` is running (optional but recommended for advanced pipelines).
+2. **Import a Pipeline**: Go to the **Pipelines** tab and click **New Pipeline**. Paste a JSON definition.
+3. **Execute**: Ask a question against the pipeline and watch the **Reasoning Trace** unfold in real-time.
+
+> [!TIP]
+> Try the **"Live Data self db analyst"** pipeline to see an AI analyze your chat history without interrupting your current sessions!
+
+---
+
+## 🏗️ Installation
 
 ### 1. Build the Engine
 ```bash
@@ -58,19 +68,7 @@ cargo run -- serve
 ```
 
 ### 4. Access the Interface
-The project contains two web interfaces:
-- **Project Landing Page**: Visit `http://localhost:8080` (or your configured port) to see the server status and landing page served from the `static/` directory.
-- **AI Command Center (Frontend)**: The primary React-based chat interface is located in the `frontend/` directory. To run it, follow the [Frontend Documentation](frontend/README.md) to launch the Vite development server (usually at `http://localhost:5173`).
-
----
-
-## 📊 Dashboard & Telemetry
-The built-in dashboard provides a "God-view" of your AI infrastructure:
-- **Token Estimation**: Monitor API costs with precise heuristics.
-- **Memory Inspection**: Deep-dive into DuckDB memory allocation (Buffer Manager, Storage, etc.).
-- **Health Telemetry**: Real-time status for your API and DuckDB kernels.
-
-![Memory Breakdown](static/screenshots/dashboard.png)
+- **AI Command Center**: `http://localhost:5173` (Primary Vite/React interface)
 
 ---
 
@@ -79,24 +77,16 @@ The built-in dashboard provides a "God-view" of your AI infrastructure:
 ### 🔌 Multi-Provider Management
 Switch providers and models on the fly without restarting the server. The dynamic sidebar and chat header allow for instant context switching.
 
-![Sidebar Navigation](static/screenshots/sidebar.png)
-
-### 💻 Developer Settings & Security
-Manage your Jacox API keys and monitor your provider fleet (OpenAI, Anthropic, Ollama, Copilot) from a centralized, real-time dashboard.
-
-![Settings Interface](static/screenshots/settings.png)
-
-### 🧠 Cognitive Pipelines
+### 🧠 Cognitive Pipelines & Trace Viewer
 Build and execute structured AI workflows with deterministic stages. Monitor every step of the reasoning process through the live **Trace Viewer**.
 
 - **Multi-Stage Orchestration**: Combine LLM generation, MCP tool calls, and automated verification.
 - **Deep Visibility**: See exactly how the AI arrived at an answer with granular trace logs.
-- **Pluggable Integration**: Connect your local `jac_llmos` instance to unlock advanced reasoning.
 
 ### 📦 Lifecycle Management
-- **Database Purge**: Clear all data instantly via `cargo run -- database purge` or API. [See Changelog](CHANGELOG.md)
-- **Export/Import**: Move your AI brain between environments via `.txt` files. [Learn more](FEATURES_GUIDE.md#5-session-portability-importexport-)
-- **CLI REPL**: Integrated terminal interface for power users.
+- **Database Purge**: Clear all data instantly via `cargo run -- database purge` or API.
+- **Export/Import**: Move your AI brain between environments via `.txt` files. [Learn more](FEATURES_GUIDE.md#5-session-portability-importexport)
+- **Skills Library**: Reusable prompt snippets and persona templates. [Learn more](SKILLS.md)
 
 ---
 
@@ -105,6 +95,5 @@ Build and execute structured AI workflows with deterministic stages. Monitor eve
 - **[Changelog](CHANGELOG.md)**: Latest updates and version history.
 - **[Project Journey](JOURNEY.md)**: Roadmap & vision board for the future.
 - **[API Guide](API_GUIDE.md)**: Detailed REST & WebSocket endpoint documentation.
-- **[System Status](static/index.html)**: Landing page and health status.
 
-Built with 🦀 and 🍕 for those who care about the details.
+Built with 🦀 and 🎨 for those who care about the details.

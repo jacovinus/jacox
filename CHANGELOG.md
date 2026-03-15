@@ -9,23 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Cognitive Pipelines Integration**: Full end-to-end support for multi-stage reasoning workflows.
-- **Pluggable Architecture**: Implemented `jac_llmos` as an optional, pluggable tool. The UI now gracefully handles service connectivity states, hiding or graying out features when disconnected.
-- **Pipeline Hub (Frontend)**: A new premium, glassmorphic page for managing pipelines with:
-  - Real-time connectivity monitoring.
-  - Interactive JSON Inspector for pipeline definitions.
-  - Creation Modal with live validation.
-  - Live Execution Modal featuring a **Real-time Reasoning Trace Viewer**.
-- **Enhanced Authentication**: Updated `ApiKeyAuthMiddleware` to support `X-API-Key` headers, enabling secure cross-service communication.
-- **Persistent Pipelines**: Added DuckDB persistence for pipeline definitions in the backend service.
+- **DuckDB Snapshotting**: Mandatory snapshotting policy for `jac_llmos` ensures non-blocking analytical access to `chat.db` while `jacox` is active.
+- **Pluggable Architecture**: Implemented `jac_llmos` as an optional, pluggable tool. The UI now gracefully handles service connectivity states.
+- **Pipeline Hub (Frontend)**: A new premium page for managing pipelines with real-time connectivity and trace viewing.
+- **Transparent Views**: `jac_llmos` now automatically creates views for `jacox` tables (`messages`, `sessions`, `pipelines`) in the `main` schema for simplified querying.
+- **Enhanced Authentication**: Support for rotating tokens (`X-Next-Token`) and `X-API-Key` headers.
 
 ### Changed
-- **LlmProvider Extensions**: Extended the `LlmProvider` trait with `execute_pipeline` to support structured workflow orchestration.
-- **Health System**: Updated central health check logic to monitor `jac_llmos` availability.
+- **UTF-8 Safety**: Refactored `LlmEngine` to use a byte buffer for streaming, preventing corruption of multibyte characters (emojis, etc.) in pipeline results.
+- **Proactive Model Loading**: `jac_llmos` now pre-loads models specified in pipeline stages to reduce cold-start latency.
 
 ### Fixed
-- **Detailed Execution Reporting**: The Pipeline Execution Modal now pulls the full error trace from the backend response, resolving the generic "Failed to execute pipeline" message.
-- **Middleware Compatibility**: Resolved issues with Bearer token vs X-API-Key resolution in the Actix-web auth layer.
-- **API Routing**: Standardized pipeline execution routes to ensure correct forwarding to the `jac_llmos` executor.
+- **Detailed Execution Reporting**: The Pipeline Execution Modal now extracts the full backend error trace.
+- **DuckDB Lock Contention**: Resolved via the new snapshot-fallback attachment mechanism.
+- **Middleware Compatibility**: Resolved issues with Bearer token vs X-API-Key resolution in Actix-web.
 
 ## [0.2.0] - 2026-03-13
 
