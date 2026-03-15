@@ -1,6 +1,6 @@
-# Jacox - LLM Chat Server with Rust + DuckDB (Final Spec)
+# Jacox - LLM Command Center Specification (Final)
 
-A pluggable, local LLM chat server built in Rust with DuckDB for conversation storage. Designed for frontends needing a local-first AI memory layer.
+A premium, pluggable LLM orchestration platform built in Rust with DuckDB for analytical conversation memory.
 
 ## Architecture Overview
 
@@ -67,7 +67,7 @@ chat:
 -- Sessions: separates unique conversation threads
 CREATE TABLE sessions (
     id UUID PRIMARY KEY,
-    name STRING,
+    name VARCHAR,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     metadata JSON DEFAULT '{}'
@@ -75,14 +75,43 @@ CREATE TABLE sessions (
 
 -- Messages: stores history for context injected into LLM
 CREATE TABLE messages (
-    id BIGINT PRIMARY KEY,
+    id BIGINT PRIMARY KEY DEFAULT nextval('seq_messages_id'),
     session_id UUID REFERENCES sessions(id) ON DELETE CASCADE,
-    role STRING NOT NULL,  -- 'system', 'user', 'assistant'
+    role VARCHAR NOT NULL,  -- 'system', 'user', 'assistant', 'tool'
     content TEXT NOT NULL,
-    model STRING,          -- provider model name
+    model VARCHAR,          -- provider model name
     token_count INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     metadata JSON DEFAULT '{}'
+);
+
+-- Tool Results: cache for autonomous tools
+CREATE TABLE tool_results (
+    id BIGINT PRIMARY KEY DEFAULT nextval('seq_tool_results_id'),
+    session_id UUID,
+    source_url VARCHAR,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Skills: reusable prompt templates
+CREATE TABLE skills (
+    id BIGINT PRIMARY KEY DEFAULT nextval('seq_skills_id'),
+    name VARCHAR NOT NULL,
+    content TEXT NOT NULL,
+    tags VARCHAR DEFAULT '',
+    source_url VARCHAR,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Pipelines: structured reasoning workflows
+CREATE TABLE pipelines (
+    id BIGINT PRIMARY KEY DEFAULT nextval('seq_pipelines_id'),
+    name VARCHAR NOT NULL,
+    definition JSON NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
@@ -98,14 +127,17 @@ Require `Authorization: Bearer <api_key>` header for all endpoints except `/heal
 | `GET` | `/health` | Health check |
 | `POST` | `/sessions` | Create session |
 | `GET` | `/sessions` | List sessions |
-| `GET` | `/sessions/:id` | Get session details |
-| `PATCH` | `/sessions/:id` | Update session (name, metadata) |
+| `PATCH` | `/sessions/:id` | Update session |
 | `DELETE` | `/sessions/:id` | Delete session |
 | `GET` | `/sessions/:id/messages` | Get history |
 | `GET` | `/sessions/:id/export` | Export as .txt |
 | `POST` | `/sessions/import` | Import from .txt |
-| `GET` | `/api/stats` | System-wide statistics |
-| `POST` | `/v1/chat/completions` | OpenAI compatible API |
+| `GET` | `/api/stats` | System telemetry |
+| `GET` | `/pipelines` | List reasoning pipelines |
+| `POST` | `/pipelines/:id/execute` | Run cognitive pipeline |
+| `GET` | `/skills` | List persona templates |
+| `GET` | `/llmos/status` | Heartbeat for reasoning engine |
+| `POST` | `/v1/chat/completions` | OpenAI Adapter |
 
 ### WebSocket
 
@@ -130,8 +162,9 @@ Require `Authorization: Bearer <api_key>` header for all endpoints except `/heal
 pub trait LlmProvider: Send + Sync {
     fn name(&self) -> &str;
     async fn chat(&self, messages: &[Message], options: ChatOptions) -> Result<ChatResponse, LlmError>;
-    async fn chat_streaming(&self, messages: &[Message], options: ChatOptions, tx: Sender<String>) -> Result<(), LlmError>;
-    fn supported_models(&self) -> Vec<&str>;
+    async fn chat_streaming(&self, messages: &[Message], options: ChatOptions, tx: Sender<String>) -> Result<Option<Vec<ToolCall>>, LlmError>;
+    async fn execute_pipeline(&self, pipeline: Value, question: String) -> Result<PipelineExecuteResult, LlmError>;
+    fn supported_models(&self) -> Vec<String>;
 }
 ```
 
