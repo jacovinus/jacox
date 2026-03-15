@@ -8,9 +8,9 @@ Jacox is a high-performance LLM orchestration platform designed with a modular, 
 
 Jacox follows a modern client-server architecture:
 
-- **Backend (Rust)**: Built with `actix-web`, it handles heavy lifting, database orchestration, and secure communication with LLM providers.
-- **Reasoning Core (Local LLMOS)**: Jacox is designed to run alongside `jac_llmos`, providing a "Local-First" cognitive stack for complex problem-solving.
-- **Frontend (React 19)**: A high-fidelity Dashboard and Chat interface built with Vite and Tailwind CSS.
+- **Visual Layer (Frontend)**: A premium React 19 / Vite interface (Port 5173) that provides the Command Center, reasoning graphs, and real-time data visualizations.
+- **Backend API (Rust)**: Built with `actix-web` (Port 8080), it handles orchestration, database management, and LLM provider communication.
+- **Reasoning Core (Local LLMOS)**: Jacox is designed to run alongside `jac_llmos` (Port 8081), providing a "Local-First" cognitive stack.
 
 ---
 
@@ -46,18 +46,21 @@ The "Cognitive Core" of Jacox:
 ```mermaid
 sequenceDiagram
     participant User as 👤 User
-    participant Jacox as 🦀 Jacox (8080)
+    participant UI as 🎨 Visual Layer (5173)
+    participant Jacox as 🦀 Backend API (8080)
     participant DB as 🦆 DuckDB (chat.db)
     participant LLMOS as 🧠 LLMOS (8081)
     
-    User->>Jacox: Ask "Analyze my history"
+    User->>UI: Ask "Analyze my history"
+    UI->>Jacox: POST /pipelines/execute
     Jacox->>DB: Fetch Session Context
     Jacox->>LLMOS: Trigger Pipeline Request
     Note over LLMOS: Detects DB Lock
     LLMOS->>DB: Attach Snapshot (Read-Only)
     LLMOS->>LLMOS: Execute reasoning stages
     LLMOS-->>Jacox: SSE Stream Results
-    Jacox-->>User: Visual Reasoning Trace
+    Jacox-->>UI: Forward Stream
+    UI-->>User: Visual Reasoning Trace
 ```
 
 ---
