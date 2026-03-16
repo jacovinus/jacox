@@ -105,7 +105,7 @@ impl AppConfig {
             if let Some(ref key) = llmos.api_key {
                 let expanded = expand_env(key);
                 if expanded == "${LLMOS_API_KEY}" || expanded.is_empty() {
-                    // Fallback to the same default master_token defined in jac_llmos
+                    // Fallback to the same default master_token defined in stepbit-core
                     llmos.api_key = Some("sk-dev-key-123".to_string());
                 } else {
                     llmos.api_key = Some(expanded);

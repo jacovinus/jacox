@@ -133,8 +133,8 @@ The Reasoning Playground is a high-fidelity editor for building ad-hoc AI agents
 ---
 
 ## 12. Pluggable Infrastructure 🔌
-Stepbit is designed to work with or without `jac_llmos`. 
+Stepbit is designed to work with or without `stepbit-core`. 
 - **Standalone**: All standard chat and search features work.
-- **Integrated**: Connect `jac_llmos` to unlock the **Pipelines Hub**, **Reasoning Graphs**, and **Advanced MCP tools**.
+- **Integrated**: Connect `stepbit-core` to unlock the **Pipelines Hub**, **Reasoning Graphs**, and **Advanced MCP tools**.
 
 Built with 🦀 and 🎨 for superior AI orchestration.

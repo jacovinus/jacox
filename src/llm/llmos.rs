@@ -163,7 +163,7 @@ impl LlmProvider for LlmosProvider {
             content,
             model: model.to_string(),
             usage: None,
-            tool_calls: None, // jac_llmos doesn't support tools yet in its ChatCompletionResponse
+            tool_calls: None, // stepbit-core doesn't support tools yet in its ChatCompletionResponse
         })
     }
 

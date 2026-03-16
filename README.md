@@ -36,7 +36,7 @@ Stepbit isn't just a server; it's a sleek, glassmorphic experience inspired by t
 
 Cognitive Pipelines are the core of Stepbit's automated reasoning. Here is how to get started in 3 steps:
 
-1. **Enable LLMOS**: Ensure `jac_llmos` is running (optional but recommended for advanced pipelines).
+1. **Enable LLMOS**: Ensure `stepbit-core` is running (optional but recommended for advanced pipelines).
 2. **Import a Pipeline**: Go to the **Pipelines** tab and click **New Pipeline**. Paste a JSON definition.
 3. **Execute**: Ask a question against the pipeline and watch the **Reasoning Trace** unfold in real-time.
 

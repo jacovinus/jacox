@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SSE Streaming Reasoning**: Implemented end-to-end Server-Sent Events (SSE) support for the Reasoning Playground.
 - **Enhanced Execution Log**: Replaced the small results grid with a vertical, scrollable execution log for high-bandwidth feedback.
 - **Sidebar Revamp**: Expanded the Node Inspector to 450px and added a dedicated formatting viewer for execution results (JSON/Text).
-- **Stream Proxy**: Added an Actix-web proxy to bridge SSE requests from the frontend to the `jac_llmos` engine.
+- **Stream Proxy**: Added an Actix-web proxy to bridge SSE requests from the frontend to the `stepbit-core` engine.
 
 ### Fixed
 - **Trace Visibility**: Resolved issues where large reasoning outputs were truncated in the UI.
@@ -27,21 +27,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Variable Resolution**: Frontend now correctly supports `{{node_id.output}}` syntax for chaining reasoning outputs.
-- **API Synchronization**: Aligned the playground with the latest `jac_llmos` Reasoning Engine specification.
+- **API Synchronization**: Aligned the playground with the latest `stepbit-core` Reasoning Engine specification.
 
 ## [0.3.0] - 2026-03-14
 
 ### Added
 - **Cognitive Pipelines Integration**: Full end-to-end support for multi-stage reasoning workflows.
-- **DuckDB Snapshotting**: Mandatory snapshotting policy for `jac_llmos` ensures non-blocking analytical access to `chat.db` while `stepbit` is active.
-- **Pluggable Architecture**: Implemented `jac_llmos` as an optional, pluggable tool. The UI now gracefully handles service connectivity states.
+- **DuckDB Snapshotting**: Mandatory snapshotting policy for `stepbit-core` ensures non-blocking analytical access to `chat.db` while `stepbit` is active.
+- **Pluggable Architecture**: Implemented `stepbit-core` as an optional, pluggable tool. The UI now gracefully handles service connectivity states.
 - **Pipeline Hub (Frontend)**: A new premium page for managing pipelines with real-time connectivity and trace viewing.
-- **Transparent Views**: `jac_llmos` now automatically creates views for `stepbit` tables (`messages`, `sessions`, `pipelines`) in the `main` schema for simplified querying.
+- **Transparent Views**: `stepbit-core` now automatically creates views for `stepbit` tables (`messages`, `sessions`, `pipelines`) in the `main` schema for simplified querying.
 - **Enhanced Authentication**: Support for rotating tokens (`X-Next-Token`) and `X-API-Key` headers.
 
 ### Changed
 - **UTF-8 Safety**: Refactored `LlmEngine` to use a byte buffer for streaming, preventing corruption of multibyte characters (emojis, etc.) in pipeline results.
-- **Proactive Model Loading**: `jac_llmos` now pre-loads models specified in pipeline stages to reduce cold-start latency.
+- **Proactive Model Loading**: `stepbit-core` now pre-loads models specified in pipeline stages to reduce cold-start latency.
 
 ### Fixed
 - **Detailed Execution Reporting**: The Pipeline Execution Modal now extracts the full backend error trace.

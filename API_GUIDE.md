@@ -13,7 +13,7 @@ Most REST endpoints require an `Authorization: Bearer <API_KEY>` header.
 - **Default Key**: `sk-dev-key-123` (Change this in `config.yaml`).
 
 ### 2. Chained Handshake (Remote LLMOS)
-When communicating with a remote `jac_llmos` instance, Stepbit uses a rotating token mechanism.
+When communicating with a remote `stepbit-core` instance, Stepbit uses a rotating token mechanism.
 - **Header**: `X-API-Key` is used for the initial handshake.
 - **Rotation**: LLMOS provides a `X-Next-Token` in the response header. 
 - **Next Request**: Stepbit must use that specific token.

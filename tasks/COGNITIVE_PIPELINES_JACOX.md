@@ -1,7 +1,7 @@
-Integrate the Cognitive Pipelines from `jac_llmos` into the `stepbit` orchestrator and provide a user interface for building, managing, and executing them.
+Integrate the Cognitive Pipelines from `stepbit-core` into the `stepbit` orchestrator and provide a user interface for building, managing, and executing them.
 
 > [!IMPORTANT]
-> **Optional Plug-and-Play**: `jac_llmos` must remain an optional component. The system must detect its presence (via health check) and only enable pipeline features if it is reachable. No part of `stepbit` should block or error out if `jac_llmos` is offline.
+> **Optional Plug-and-Play**: `stepbit-core` must remain an optional component. The system must detect its presence (via health check) and only enable pipeline features if it is reachable. No part of `stepbit` should block or error out if `stepbit-core` is offline.
 
 ## 1. Backend Integration (Stepbit)
 
@@ -11,11 +11,11 @@ Integrate the Cognitive Pipelines from `jac_llmos` into the `stepbit` orchestrat
   - [ ] Define `pipelines` table in `chat.db` (id, name, definition_json, created_at).
   - [ ] Implement CRUD operations in the database layer.
 - **Connectivity & Discovery**:
-  - [ ] Implement a `LlmosStatus` service to poll the health of `jac_llmos`.
+  - [ ] Implement a `LlmosStatus` service to poll the health of `stepbit-core`.
   - [ ] Add a `GET /api/llmos/status` endpoint for the frontend.
 - **API Endpoints**:
   - [ ] ...
-  - [ ] `POST /api/pipelines/execute/:id`: ... Return a clear `503 Service Unavailable` if `jac_llmos` is disconnected.
+  - [ ] `POST /api/pipelines/execute/:id`: ... Return a clear `503 Service Unavailable` if `stepbit-core` is disconnected.
 - **Security**:
   - [ ] Ensure all pipeline endpoints are protected by the rolling token middleware.
 
@@ -26,7 +26,7 @@ Integrate the Cognitive Pipelines from `jac_llmos` into the `stepbit` orchestrat
 - **Global State / Context**:
   - [ ] Implement a `useLlmos` hook to track connectivity status.
 - **Components**:
-  - [ ] `Sidebar`: Hide the "Pipelines" item if `jac_llmos` is not detected.
+  - [ ] `Sidebar`: Hide the "Pipelines" item if `stepbit-core` is not detected.
   - [ ] `Page Wrappers`: Show a "Disconnected" notice or redirect if a user manually navigates to a pipeline page while the service is down.
 - **Components**:
   - [ ] `PipelineList`: Card-based view of available pipelines with quick-action buttons (Run, Edit, Delete).
@@ -45,7 +45,7 @@ Integrate the Cognitive Pipelines from `jac_llmos` into the `stepbit` orchestrat
 
 ### Backend Tests (`stepbit/tests/pipeline_integration.rs`)
 - [ ] Test DB persistence (Save/Load/Delete).
-- [ ] Test API orchestration with mock `jac_llmos` responses.
+- [ ] Test API orchestration with mock `stepbit-core` responses.
 - [ ] Test error handling (invalid JSON, missing stages).
 
 ### Frontend Tests (`stepbit/frontend/src/pages/Pipelines.test.tsx`)

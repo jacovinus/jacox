@@ -10,7 +10,7 @@ Stepbit follows a modern client-server architecture:
 
 - **Visual Layer (Frontend)**: A premium React 19 / Vite interface (Port 5173) that provides the Command Center, reasoning graphs, and real-time data visualizations.
 - **Backend API (Rust)**: Built with `actix-web` (Port 8080), it handles orchestration, database management, and LLM provider communication.
-- **Reasoning Core (Local LLMOS)**: Stepbit is designed to run alongside `jac_llmos` (Port 8081), providing a "Local-First" cognitive stack.
+- **Reasoning Core (Local LLMOS)**: Stepbit is designed to run alongside `stepbit-core` (Port 8081), providing a "Local-First" cognitive stack.
 
 ---
 
@@ -24,14 +24,14 @@ Handles the communication between the frontend and the core engine.
 
 ### 2. LLM Engine (`src/llm/`)
 A pluggable provider system that abstracts the complexity of different AI backends:
-- **Core (Local Reasoning)**: `jac_llmos` integration. This is the **primary, mission-critical connection** that enables the Pipelines Hub, Reasoning Graphs, and advanced MCP tools.
+- **Core (Local Reasoning)**: `stepbit-core` integration. This is the **primary, mission-critical connection** that enables the Pipelines Hub, Reasoning Graphs, and advanced MCP tools.
 - **Local Fallbacks**: Ollama for standard chat tasks.
 - **Cloud Providers**: OpenAI, Anthropic, GitHub Copilot.
 
 ### 3. Data Layer (`src/db/`)
 Powered by **DuckDB**, a high-performance analytical database.
 - **Local Memory**: Persistent storage for all conversations in `chat.db`.
-- **Analytical Snapshotting**: Allows `jac_llmos` to perform non-blocking analysis on live data by attaching read-only snapshots.
+- **Analytical Snapshotting**: Allows `stepbit-core` to perform non-blocking analysis on live data by attaching read-only snapshots.
 
 ### 4. Reasoning Engine & Pipelines (`src/llm/llmos.rs`)
 The "Cognitive Core" of Stepbit:
