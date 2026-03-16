@@ -1,13 +1,13 @@
-# 🌌 Jacox: The High-Performance LLM Command Center
+# 🌌 Stepbit: The High-Performance LLM Command Center
 
-**Jacox** is a premium, local-first LLM orchestration platform built with a **Rust** backbone and **DuckDB** intelligence. It’s designed for developers who demand speed, security, and a beautiful interface for their AI workflows.
+**Stepbit** is a premium, local-first LLM orchestration platform built with a **Rust** backbone and **DuckDB** intelligence. It’s designed for developers who demand speed, security, and a beautiful interface for their AI workflows.
 
 ![Dashboard Overview](static/screenshots/dashboard.png)
 
 ---
 
 ## 🎨 A World-Class Aesthetic
-Jacox isn't just a server; it's a sleek, glassmorphic experience inspired by the **Monokai-Gruvbox** palette. 
+Stepbit isn't just a server; it's a sleek, glassmorphic experience inspired by the **Monokai-Gruvbox** palette. 
 
 - **Live CSS & HTML Rendering**: Inject active styles and raw HTML directly into chat for interactive demos.
 - **Rich Markdown Rendering**: Full GFM support with optimized syntax highlighting.
@@ -34,7 +34,7 @@ Jacox isn't just a server; it's a sleek, glassmorphic experience inspired by the
 
 ## 🚀 Quick Start: Cognitive Pipelines
 
-Cognitive Pipelines are the core of Jacox's automated reasoning. Here is how to get started in 3 steps:
+Cognitive Pipelines are the core of Stepbit's automated reasoning. Here is how to get started in 3 steps:
 
 1. **Enable LLMOS**: Ensure `jac_llmos` is running (optional but recommended for advanced pipelines).
 2. **Import a Pipeline**: Go to the **Pipelines** tab and click **New Pipeline**. Paste a JSON definition.
@@ -49,8 +49,8 @@ Cognitive Pipelines are the core of Jacox's automated reasoning. Here is how to 
 
 ### 1. Build the Engine
 ```bash
-git clone https://github.com/jacovinus/jacox.git
-cd jacox
+git clone https://github.com/jacovinus/stepbit.git
+cd stepbit
 cargo build --release
 ```
 

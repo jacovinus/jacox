@@ -1,7 +1,7 @@
 services:
-  jacox:
+  stepbit:
     build: .
-    container_name: jacox
+    container_name: stepbit
     ports:
       - "8080:8080"
     environment:

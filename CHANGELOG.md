@@ -33,10 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Cognitive Pipelines Integration**: Full end-to-end support for multi-stage reasoning workflows.
-- **DuckDB Snapshotting**: Mandatory snapshotting policy for `jac_llmos` ensures non-blocking analytical access to `chat.db` while `jacox` is active.
+- **DuckDB Snapshotting**: Mandatory snapshotting policy for `jac_llmos` ensures non-blocking analytical access to `chat.db` while `stepbit` is active.
 - **Pluggable Architecture**: Implemented `jac_llmos` as an optional, pluggable tool. The UI now gracefully handles service connectivity states.
 - **Pipeline Hub (Frontend)**: A new premium page for managing pipelines with real-time connectivity and trace viewing.
-- **Transparent Views**: `jac_llmos` now automatically creates views for `jacox` tables (`messages`, `sessions`, `pipelines`) in the `main` schema for simplified querying.
+- **Transparent Views**: `jac_llmos` now automatically creates views for `stepbit` tables (`messages`, `sessions`, `pipelines`) in the `main` schema for simplified querying.
 - **Enhanced Authentication**: Support for rotating tokens (`X-Next-Token`) and `X-API-Key` headers.
 
 ### Changed

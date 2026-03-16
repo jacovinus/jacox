@@ -1,8 +1,8 @@
 ---
-name: Jacox Reasoning Interface
+name: Stepbit Reasoning Interface
 description: Guidelines for building the UI/UX for the Reasoning Graph Engine, including visualization and interaction patterns.
 ---
-# Jacox Reasoning Interface Skill
+# Stepbit Reasoning Interface Skill
 
 This skill focuses on the frontend presentation of the Reasoning Graph.
 

@@ -1,4 +1,4 @@
-# ⚖️ Jacox Governance
+# ⚖️ Stepbit Governance
 
 How we manage the chaos, one `cargo check` at a time.
 

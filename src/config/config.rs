@@ -83,7 +83,7 @@ impl AppConfig {
 
         let settings = config::Config::builder()
             .add_source(config::File::with_name(path).required(false))
-            .add_source(config::Environment::with_prefix("JACOX").separator("__"))
+            .add_source(config::Environment::with_prefix("STEPBIT").separator("__"))
             .build()?;
 
         let mut app_config: AppConfig = settings.try_deserialize()?;

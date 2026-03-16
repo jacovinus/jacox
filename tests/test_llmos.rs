@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use jacox::llm::llmos::LlmosProvider;
-    use jacox::llm::{
+    use stepbit::llm::llmos::LlmosProvider;
+    use stepbit::llm::{
         models::{ChatOptions, Message},
         LlmProvider,
     };
@@ -146,7 +146,7 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        use jacox::llm::models::ReasoningGraph;
+        use stepbit::llm::models::ReasoningGraph;
         let graph = ReasoningGraph::default();
         let results = provider.execute_reasoning(graph).await.unwrap();
         

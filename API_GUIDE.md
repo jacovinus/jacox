@@ -1,22 +1,22 @@
-# Jacox API Guide 🛠️
+# Stepbit API Guide 🛠️
 
-This guide documents the REST and WebSocket endpoints available in the Jacox LLM Server. 
+This guide documents the REST and WebSocket endpoints available in the Stepbit LLM Server. 
 
 ---
 
 ## 🏗️ Authentication & Security
 
-Jacox uses a hybrid authentication model to balance ease of use with enterprise-grade security.
+Stepbit uses a hybrid authentication model to balance ease of use with enterprise-grade security.
 
 ### 1. Bearer Token (Standard)
 Most REST endpoints require an `Authorization: Bearer <API_KEY>` header.
 - **Default Key**: `sk-dev-key-123` (Change this in `config.yaml`).
 
 ### 2. Chained Handshake (Remote LLMOS)
-When communicating with a remote `jac_llmos` instance, Jacox uses a rotating token mechanism.
+When communicating with a remote `jac_llmos` instance, Stepbit uses a rotating token mechanism.
 - **Header**: `X-API-Key` is used for the initial handshake.
 - **Rotation**: LLMOS provides a `X-Next-Token` in the response header. 
-- **Next Request**: Jacox must use that specific token.
+- **Next Request**: Stepbit must use that specific token.
 - **Verification**: This prevents replay attacks and ensures zero-trust connectivity.
 
 ---

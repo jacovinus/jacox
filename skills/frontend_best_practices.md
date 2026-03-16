@@ -1,10 +1,10 @@
 ---
 name: Frontend Development Best Practices
-description: Guidelines for frontend development in Jacox, including package management and testing.
+description: Guidelines for frontend development in Stepbit, including package management and testing.
 ---
 # Frontend Development Best Practices
 
-This skill outlines the standards for the Jacox React/Vite frontend.
+This skill outlines the standards for the Stepbit React/Vite frontend.
 
 ## Environment Requirements
 

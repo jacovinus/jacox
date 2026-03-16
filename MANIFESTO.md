@@ -1,4 +1,4 @@
-# 📜 The Jacox Manifesto
+# 📜 The Stepbit Manifesto
 
 A declaration of war against latency, centralized control, and ugly user interfaces.
 
@@ -12,4 +12,4 @@ Your chat history is yours. It shouldn't be "mined," "analyzed," or "leveraged f
 A command-line interface doesn't have to look like a tax return from 1984. We believe in the right to high-fidelity SVG rendering, even when we're just drawing a circle.
 
 ### IV. The Local-First Uprising
-We stand with the developers who are tired of "Status Pages" telling them their tools are down. If your computer is on, Jacox is up. If the internet dies, we keep chatting. The apocalypse will be localized, but at least the UI will be premium.
+We stand with the developers who are tired of "Status Pages" telling them their tools are down. If your computer is on, Stepbit is up. If the internet dies, we keep chatting. The apocalypse will be localized, but at least the UI will be premium.

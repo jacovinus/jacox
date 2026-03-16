@@ -1,6 +1,6 @@
 # DuckDB Expert Skills
 
-This skill provides a set of highly optimized queries and knowledge for managing the internal DuckDB database of Jacox.
+This skill provides a set of highly optimized queries and knowledge for managing the internal DuckDB database of Stepbit.
 
 ## System Introspection
 

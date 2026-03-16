@@ -2,15 +2,15 @@
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
 use actix_cors::Cors;
 use clap::Parser;
-use jacox::config::AppConfig;
-use jacox::db;
-use jacox::api::middleware::ApiKeyAuth;
-use jacox::llm::ProviderFactory;
-use jacox::cli::{commands::{Cli, Commands}, run_cli};
+use stepbit::config::AppConfig;
+use stepbit::db;
+use stepbit::api::middleware::ApiKeyAuth;
+use stepbit::llm::ProviderFactory;
+use stepbit::cli::{commands::{Cli, Commands}, run_cli};
 use tracing::{error, info, warn};
 use std::path::PathBuf;
 
-async fn health(db: web::Data<jacox::db::DbPool>) -> impl Responder {
+async fn health(db: web::Data<stepbit::db::DbPool>) -> impl Responder {
     let db_status = match db.lock() {
         Ok(conn) => {
             match conn.execute("SELECT 1", []) {
@@ -39,7 +39,7 @@ async fn main() -> std::io::Result<()> {
         return Ok(());
     }
 
-    info!("Starting Jacox LLM Server...");
+    info!("Starting Stepbit LLM Server...");
 
     let config = match AppConfig::load(&cli.config) {
         Ok(c) => c,
@@ -94,13 +94,13 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/api")
                     .route("/health", web::get().to(health))
-                    .configure(jacox::api::routes::configure)
-                    .configure(jacox::api::config_routes::configure)
-                    .configure(jacox::api::skills_routes::configure)
-                    .configure(jacox::api::pipeline_routes::configure)
-                    .service(jacox::api::routes_openai::openai_chat_completions)
+                    .configure(stepbit::api::routes::configure)
+                    .configure(stepbit::api::config_routes::configure)
+                    .configure(stepbit::api::skills_routes::configure)
+                    .configure(stepbit::api::pipeline_routes::configure)
+                    .service(stepbit::api::routes_openai::openai_chat_completions)
             )
-            .configure(jacox::api::websocket::configure)
+            .configure(stepbit::api::websocket::configure)
     })
     .bind((host, port))?
     .run()

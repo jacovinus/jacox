@@ -55,7 +55,7 @@ export const Layout = () => {
                         <Cpu className="text-white w-6 h-6" />
                     </div>
                     <span className="text-2xl font-bold tracking-tight bg-gradient-to-r from-white to-gruv-light-4 bg-clip-text text-transparent">
-                        Jacox
+                        Stepbit
                     </span>
                 </div>
 

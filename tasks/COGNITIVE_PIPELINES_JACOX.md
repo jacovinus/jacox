@@ -1,9 +1,9 @@
-Integrate the Cognitive Pipelines from `jac_llmos` into the `jacox` orchestrator and provide a user interface for building, managing, and executing them.
+Integrate the Cognitive Pipelines from `jac_llmos` into the `stepbit` orchestrator and provide a user interface for building, managing, and executing them.
 
 > [!IMPORTANT]
-> **Optional Plug-and-Play**: `jac_llmos` must remain an optional component. The system must detect its presence (via health check) and only enable pipeline features if it is reachable. No part of `jacox` should block or error out if `jac_llmos` is offline.
+> **Optional Plug-and-Play**: `jac_llmos` must remain an optional component. The system must detect its presence (via health check) and only enable pipeline features if it is reachable. No part of `stepbit` should block or error out if `jac_llmos` is offline.
 
-## 1. Backend Integration (Jacox)
+## 1. Backend Integration (Stepbit)
 
 **Objective**: Provide persistence and execution orchestration for pipelines.
 
@@ -43,18 +43,18 @@ Integrate the Cognitive Pipelines from `jac_llmos` into the `jacox` orchestrator
 
 **Strict TDD approach**: Write tests before implementation for both backend and frontend.
 
-### Backend Tests (`jacox/tests/pipeline_integration.rs`)
+### Backend Tests (`stepbit/tests/pipeline_integration.rs`)
 - [ ] Test DB persistence (Save/Load/Delete).
 - [ ] Test API orchestration with mock `jac_llmos` responses.
 - [ ] Test error handling (invalid JSON, missing stages).
 
-### Frontend Tests (`jacox/frontend/src/pages/Pipelines.test.tsx`)
+### Frontend Tests (`stepbit/frontend/src/pages/Pipelines.test.tsx`)
 - [ ] Test component rendering with mock data.
 - [ ] Test execution flow: sending request and displaying received trace.
 - [ ] Test editor validation.
 
 ## 4. Deliverables
-1. Functional Pipeline CRUD in Jacox.
-2. Executable pipelines via the Jacox UI.
+1. Functional Pipeline CRUD in Stepbit.
+2. Executable pipelines via the Stepbit UI.
 3. Visual reasoning trace for every execution.
 4. Comprehensive documentation update.

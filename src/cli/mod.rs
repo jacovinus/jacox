@@ -150,7 +150,7 @@ async fn run_repl(session_id: Uuid, config: AppConfig) {
     
     let llm = ProviderFactory::create_default(&config).expect("Failed to init LLM provider");
     
-    println!("--- Jacox Terminal Chat ---");
+    println!("--- Stepbit Terminal Chat ---");
     println!("Connected to Session: {}", session_id);
     println!("Type /exit to quit.");
     println!("---------------------------");
@@ -191,7 +191,7 @@ async fn run_repl(session_id: Uuid, config: AppConfig) {
         let (tx, mut rx) = mpsc::channel::<String>(100);
         let llm_clone = llm.clone();
         
-        print!("Jacox> ");
+        print!("Stepbit> ");
         io::stdout().flush().unwrap();
         
         tokio::spawn(async move {

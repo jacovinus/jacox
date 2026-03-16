@@ -55,7 +55,7 @@ export const Settings = () => {
                     <SettingsIcon className="text-gruv-yellow" />
                     Settings
                 </h1>
-                <p className="text-gruv-light-4">Manage your Jacox instance, LLM providers and model preferences.</p>
+                <p className="text-gruv-light-4">Manage your Stepbit instance, LLM providers and model preferences.</p>
             </header>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -66,7 +66,7 @@ export const Settings = () => {
                         Platform Security
                     </h3>
                     <div className="flex flex-col gap-2">
-                        <label className="text-xs font-mono text-gruv-light-4 uppercase">Jacox API Key</label>
+                        <label className="text-xs font-mono text-gruv-light-4 uppercase">Stepbit API Key</label>
                         <input
                             type="password"
                             value={apiKey}

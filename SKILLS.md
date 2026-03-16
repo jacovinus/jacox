@@ -1,6 +1,6 @@
-# Jacox Skills 📚
+# Stepbit Skills 📚
 
-**Skills** are reusable, named markdown snippets that live in the Jacox database. Think of them as your personal prompt library: system prompts, role definitions, code templates, or any text you want to inject into a conversation without re-typing it.
+**Skills** are reusable, named markdown snippets that live in the Stepbit database. Think of them as your personal prompt library: system prompts, role definitions, code templates, or any text you want to inject into a conversation without re-typing it.
 
 ---
 
@@ -34,7 +34,7 @@
 ### Step 2: Import from the Community
 1. Click **Import from URL**.
 2. Enter a raw GitHub URL (e.g., a system prompt from a repo).
-3. Jacox automatically fetches the content and saves it as a reusable skill.
+3. Stepbit automatically fetches the content and saves it as a reusable skill.
 
 ### Step 3: Usage in Chat
 1. Find your `Coding Expert` skill card.
@@ -45,7 +45,7 @@
 
 ## 🛠️ Advanced: Skills API
 
-For power users, Jacox provides a full REST API for skill management.
+For power users, Stepbit provides a full REST API for skill management.
 
 ### List All Skills
 ```bash

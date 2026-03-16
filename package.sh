@@ -1,12 +1,12 @@
 #!/bin/bash
-# Jacox Packager - Creates a portable deployment bundle
+# Stepbit Packager - Creates a portable deployment bundle
 
-echo "🏗 Building Jacox release binary..."
+echo "🏗 Building Stepbit release binary..."
 cargo build --release
 
 echo "📦 Packaging..."
 mkdir -p dist
-cp target/release/jacox dist/
+cp target/release/stepbit dist/
 cp config.yaml dist/
 cp -r static dist/
 

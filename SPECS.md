@@ -1,4 +1,4 @@
-# Jacox - LLM Command Center Specification (Final)
+# Stepbit - LLM Command Center Specification (Final)
 
 A premium, pluggable LLM orchestration platform built in Rust with DuckDB for analytical conversation memory.
 
@@ -6,8 +6,8 @@ A premium, pluggable LLM orchestration platform built in Rust with DuckDB for an
 
 ```mermaid
 graph TD;
-    Client[React/CLI/App] -->|HTTP/REST| API[Jacox API Layer]
-    Client -->|WebSocket| WS[Jacox WebSocket Handler]
+    Client[React/CLI/App] -->|HTTP/REST| API[Stepbit API Layer]
+    Client -->|WebSocket| WS[Stepbit WebSocket Handler]
     
     API --> Auth(Auth Middleware)
     WS --> Auth

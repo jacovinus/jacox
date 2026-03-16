@@ -1,6 +1,6 @@
-# Jacox Frontend: Premium AI Intelligence Interface 🌌
+# Stepbit Frontend: Premium AI Intelligence Interface 🌌
 
-The Jacox frontend is a high-performance, local-first React application designed for seamless interaction with local and cloud LLMs. It prioritizes aesthetic excellence (Monokai-Gruvbox) and technical robustness.
+The Stepbit frontend is a high-performance, local-first React application designed for seamless interaction with local and cloud LLMs. It prioritizes aesthetic excellence (Monokai-Gruvbox) and technical robustness.
 
 ## 🛠 Tech Stack
 - **Framework**: React 19 + Vite 6
@@ -65,7 +65,7 @@ Launch the Vite development server with hot module replacement (HMR):
 ```bash
 pnpm dev
 ```
-By default, the frontend will be available at `http://localhost:5173`. Make sure the Jacox backend is also running to enable chat functionality.
+By default, the frontend will be available at `http://localhost:5173`. Make sure the Stepbit backend is also running to enable chat functionality.
 
 ### 4. Building for Production
 Create a production-ready build in the `dist/` directory:

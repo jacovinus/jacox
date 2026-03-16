@@ -1,5 +1,5 @@
-use jacox::db::{connection, service::DbService};
-use jacox::config::DatabaseConfig;
+use stepbit::db::{connection, service::DbService};
+use stepbit::config::DatabaseConfig;
 use serde_json::json;
 
 #[test]

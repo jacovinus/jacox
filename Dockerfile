@@ -16,7 +16,7 @@ COPY Cargo.toml Cargo.lock ./
 # Create a dummy main to pre-build dependencies and cache them
 RUN mkdir src && echo "fn main() {}" > src/main.rs
 RUN cargo build --release
-RUN rm -f target/release/deps/jacox*
+RUN rm -f target/release/deps/stepbit*
 
 # Copy source and static assets
 COPY src ./src
@@ -37,7 +37,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy binary from builder
-COPY --from=builder /app/target/release/jacox /usr/local/bin/jacox
+COPY --from=builder /app/target/release/stepbit /usr/local/bin/stepbit
 
 # Copy default config (can be overridden by volume)
 COPY config.yaml ./config.yaml
@@ -48,5 +48,5 @@ ENV JACOX_SERVER_HOST=0.0.0.0
 
 EXPOSE 8080
 
-ENTRYPOINT ["jacox"]
+ENTRYPOINT ["stepbit"]
 CMD ["serve"]

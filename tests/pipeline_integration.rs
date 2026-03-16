@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use jacox::db::connection::{SCHEMA, get_connection};
-    use jacox::db::service::DbService;
-    use jacox::config::DatabaseConfig;
+    use stepbit::db::connection::{SCHEMA, get_connection};
+    use stepbit::db::service::DbService;
+    use stepbit::config::DatabaseConfig;
     use serde_json::json;
     use uuid::Uuid;
 
@@ -55,8 +55,8 @@ mod tests {
     async fn test_pipeline_execution_orchestration() {
         use wiremock::matchers::{method, path};
         use wiremock::{Mock, MockServer, ResponseTemplate};
-        use jacox::llm::llmos::LlmosProvider;
-        use jacox::llm::LlmProvider;
+        use stepbit::llm::llmos::LlmosProvider;
+        use stepbit::llm::LlmProvider;
 
         let mock_server = MockServer::start().await;
         let provider = LlmosProvider::new(mock_server.uri(), "phi-4".to_string(), None);

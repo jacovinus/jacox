@@ -1,10 +1,10 @@
 ---
-description: Expert guidance on Jacox Frontend (React/Vite) architecture, design system, and real-time visualization.
+description: Expert guidance on Stepbit Frontend (React/Vite) architecture, design system, and real-time visualization.
 ---
 
-# Jacox Frontend Expert Skill
+# Stepbit Frontend Expert Skill
 
-The Jacox frontend is a premium, high-performance React application designed for AI orchestration.
+The Stepbit frontend is a premium, high-performance React application designed for AI orchestration.
 
 ## Tech Stack
 - **Core**: React 19, Vite 6, TypeScript.

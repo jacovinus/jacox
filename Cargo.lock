@@ -1933,41 +1933,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "92ecc6618181def0457392ccd0ee51198e065e016d1d527a7ac1b6dc7c1f09d2"
 
 [[package]]
-name = "jacox"
-version = "0.1.0"
-dependencies = [
- "actix-cors",
- "actix-files",
- "actix-web",
- "actix-ws",
- "async-stream",
- "async-trait",
- "bytes",
- "chrono",
- "clap",
- "config",
- "dotenv",
- "duckdb",
- "futures-util",
- "html-to-markdown-rs",
- "llm_readability",
- "parking_lot",
- "qstring",
- "reqwest",
- "scraper",
- "serde",
- "serde_json",
- "thiserror 1.0.69",
- "tokio",
- "tower 0.4.13",
- "tracing",
- "tracing-subscriber",
- "urlencoding",
- "uuid",
- "wiremock",
-]
-
-[[package]]
 name = "jobserver"
 version = "0.1.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3450,6 +3415,41 @@ name = "stable_deref_trait"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
+
+[[package]]
+name = "stepbit"
+version = "0.1.0"
+dependencies = [
+ "actix-cors",
+ "actix-files",
+ "actix-web",
+ "actix-ws",
+ "async-stream",
+ "async-trait",
+ "bytes",
+ "chrono",
+ "clap",
+ "config",
+ "dotenv",
+ "duckdb",
+ "futures-util",
+ "html-to-markdown-rs",
+ "llm_readability",
+ "parking_lot",
+ "qstring",
+ "reqwest",
+ "scraper",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tokio",
+ "tower 0.4.13",
+ "tracing",
+ "tracing-subscriber",
+ "urlencoding",
+ "uuid",
+ "wiremock",
+]
 
 [[package]]
 name = "string_cache"

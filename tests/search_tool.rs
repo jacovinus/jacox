@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use jacox::tools::search::SearchTool;
-    use jacox::tools::Tool;
+    use stepbit::tools::search::SearchTool;
+    use stepbit::tools::Tool;
 
     #[tokio::test]
     async fn test_search_tool_definition() {

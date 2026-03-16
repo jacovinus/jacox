@@ -1,47 +1,47 @@
-# Jacox Deployment Guide 🚀
+# Stepbit Deployment Guide 🚀
 
-This guide explains how to deploy Jacox in production environments, both with and without Docker.
+This guide explains how to deploy Stepbit in production environments, both with and without Docker.
 
 ---
 
 ## 🏗 Option 1: Standalone Binary (Non-Docker)
-Rust allows you to compile Jacox into a high-performance binary that you can run directly on a server.
+Rust allows you to compile Stepbit into a high-performance binary that you can run directly on a server.
 
 ### 1. Build the Release Binary
 On your build machine (or server):
 ```bash
 cargo build --release
 ```
-The resulting binary will be at `target/release/jacox`.
+The resulting binary will be at `target/release/stepbit`.
 
 ### 2. Create a Deployment Bundle 📦
-To run Jacox on a remote server, you need three things:
-1.  **The Binary**: `target/release/jacox`
+To run Stepbit on a remote server, you need three things:
+1.  **The Binary**: `target/release/stepbit`
 2.  **Configuration**: `config.yaml`
 3.  **Static Assets**: The `static/` directory (for the Playground and Landing Page).
 
 **Structure:**
 ```text
 deploy/
-├── jacox        (the binary)
+├── stepbit        (the binary)
 ├── config.yaml  (your production config)
 └── static/      (the folder)
 ```
 
 ### 3. Running as a System Service (Linux)
-To keep Jacox running in the background, use a `systemd` unit:
+To keep Stepbit running in the background, use a `systemd` unit:
 
-**`/etc/systemd/system/jacox.service`**
+**`/etc/systemd/system/stepbit.service`**
 ```ini
 [Unit]
-Description=Jacox LLM Server
+Description=Stepbit LLM Server
 After=network.target
 
 [Service]
 Type=simple
 User=youruser
-WorkingDirectory=/home/youruser/jacox
-ExecStart=/home/youruser/jacox/jacox serve
+WorkingDirectory=/home/youruser/stepbit
+ExecStart=/home/youruser/stepbit/stepbit serve
 Restart=always
 Environment=JACOX_SERVER_HOST=0.0.0.0
 Environment=OPENAI_API_KEY=sk-...

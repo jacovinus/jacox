@@ -105,7 +105,7 @@ pub async fn fetch_url(
 
     let response = client
         .get(&body.url)
-        .header("User-Agent", "jacox/1.0")
+        .header("User-Agent", "stepbit/1.0")
         .send()
         .await
         .map_err(|e| actix_web::error::ErrorBadGateway(e.to_string()))?;

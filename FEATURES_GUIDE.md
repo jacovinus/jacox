@@ -1,11 +1,11 @@
-# Jacox: Features & Usage Guide 📘
+# Stepbit: Features & Usage Guide 📘
 
-This guide provides a deep-dive into every capability of the Jacox LLM Server, including real-world examples and architectural use cases.
+This guide provides a deep-dive into every capability of the Stepbit LLM Server, including real-world examples and architectural use cases.
 
 ---
 
 ## 1. Multi-Provider LLM Engine 🧠
-Jacox abstracts away the differences between various LLM providers. You can switch between cloud (OpenAI, Anthropic) and local (Ollama) models with a single click or config change.
+Stepbit abstracts away the differences between various LLM providers. You can switch between cloud (OpenAI, Anthropic) and local (Ollama) models with a single click or config change.
 
 ### 🛠 Configuration Example
 ```yaml
@@ -37,7 +37,7 @@ Since data is in DuckDB, you can run complex SQL queries over your chat history 
 ---
 
 ## 3. Real-time WebSocket Streaming ⚡
-Jacox supports token-by-token streaming via WebSockets, providing a fluid "typing" effect.
+Stepbit supports token-by-token streaming via WebSockets, providing a fluid "typing" effect.
 
 ### 🎯 Live Status Indicators
 During a stream, you will see real-time status updates:
@@ -48,12 +48,12 @@ During a stream, you will see real-time status updates:
 ---
 
 ## 4. Internal Service Security (Rolling Tokens) 🛡️
-When communicating with **LLMOS**, Jacox implements a **Chained Request Security** handshake. After every successful request, LLMOS rotates its internal token and provides a new one via the `X-Next-Token` header.
+When communicating with **LLMOS**, Stepbit implements a **Chained Request Security** handshake. After every successful request, LLMOS rotates its internal token and provides a new one via the `X-Next-Token` header.
 
 ### 🛠 Handshake Mechanics
-1. **Initial**: Jacox uses the Master API Key.
+1. **Initial**: Stepbit uses the Master API Key.
 2. **Handshake**: LLMOS validates and sends back a `X-Next-Token`.
-3. **Chain**: Jacox uses that specific token for the next request.
+3. **Chain**: Stepbit uses that specific token for the next request.
 4. **Safety**: If the chain breaks, it automatically re-syncs using the Master Key.
 
 ---
@@ -79,15 +79,15 @@ Pipelines transform LLMs from simple chat bots into structured reasoning agents.
 ---
 
 ## 7. Internet Search Tool 🌐
-Give local models access to the real world. Jacox uses a custom scraper to fetch grounding data.
+Give local models access to the real world. Stepbit uses a custom scraper to fetch grounding data.
 
 ### 🛠 Example Prompt
-"Who won the match yesterday?" -> Jacox will automatically perform an `internet_search` to find the latest news.
+"Who won the match yesterday?" -> Stepbit will automatically perform an `internet_search` to find the latest news.
 
 ---
 
 ## 8. High-Fidelity Data Visualization (Charts) 📊
-Jacox renders interactive charts directly in chat. If the model detects data trends, it will output a JSON block that Jacox transforms into a premium visualization.
+Stepbit renders interactive charts directly in chat. If the model detects data trends, it will output a JSON block that Stepbit transforms into a premium visualization.
 
 ### 🎯 Supported Types
 - **Line Charts**: Ideal for temporal data.
@@ -102,7 +102,7 @@ A persistent library of reusable prompts. Use it to store personas like "Expert 
 ### 🎯 Step-by-Step: Importing a Persona
 1. Go to **Skills** tab.
 2. Click **Import from URL**.
-3. Paste: `https://raw.githubusercontent.com/jacovinus/jacox/master/skills/coding_expert.md`
+3. Paste: `https://raw.githubusercontent.com/jacovinus/stepbit/master/skills/coding_expert.md`
 4. The persona is now saved. Click **Copy** and paste it into any chat.
 
 ---
@@ -133,7 +133,7 @@ The Reasoning Playground is a high-fidelity editor for building ad-hoc AI agents
 ---
 
 ## 12. Pluggable Infrastructure 🔌
-Jacox is designed to work with or without `jac_llmos`. 
+Stepbit is designed to work with or without `jac_llmos`. 
 - **Standalone**: All standard chat and search features work.
 - **Integrated**: Connect `jac_llmos` to unlock the **Pipelines Hub**, **Reasoning Graphs**, and **Advanced MCP tools**.
 

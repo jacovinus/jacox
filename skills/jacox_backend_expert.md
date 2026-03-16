@@ -1,10 +1,10 @@
 ---
-description: Expert guidance on Jacox Backend (Rust/Actix-web) architecture, DuckDB integration, and LLMOS proxying.
+description: Expert guidance on Stepbit Backend (Rust/Actix-web) architecture, DuckDB integration, and LLMOS proxying.
 ---
 
-# Jacox Backend Expert Skill
+# Stepbit Backend Expert Skill
 
-Jacox is a high-performance orchestration server written in Rust, using `actix-web` and `DuckDB`.
+Stepbit is a high-performance orchestration server written in Rust, using `actix-web` and `DuckDB`.
 
 ## Technical Stack
 - **Framework**: `actix-web` for high-throughput HTTP and WebSockets.

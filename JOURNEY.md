@@ -1,4 +1,4 @@
-# 🧭 Jacox Project Journey
+# 🧭 Stepbit Project Journey
 
 This document serves as the project's roadmap and "travel journal," documenting our future plans, experimental ideas, and long-term vision.
 
@@ -11,7 +11,7 @@ This document serves as the project's roadmap and "travel journal," documenting 
 - **Cognitive Pipelines Engine**: Multi-stage reasoning with deterministic execution.
 - **Glassmorphic UI overhaul**: Premium dark-mode dashboard and live reasoning traces.
 - **DuckDB Snapshotting**: Non-blocking analytical access to live production data.
-- **Pluggable Intelligence**: Decoupled Jacox and LLMOS for maximum flexibility.
+- **Pluggable Intelligence**: Decoupled Stepbit and LLMOS for maximum flexibility.
 - **Skills Library**: Managed persona and prompt snippet system.
 
 ---
@@ -24,7 +24,7 @@ This document serves as the project's roadmap and "travel journal," documenting 
 
 ### 2. 🧪 Autonomous ML Experiment Tracking
 - **The Vision**: Use Cognitive Pipelines to automatically monitor, log, and analyze machine learning experiments.
-- **Integration**: Pluggable tracking for external Python applications using the Jacox API. [See Guide](ML_EXPERIMENT_TRACKING_GUIDE.md)
+- **Integration**: Pluggable tracking for external Python applications using the Stepbit API. [See Guide](ML_EXPERIMENT_TRACKING_GUIDE.md)
 
 ### 3. 🔐 Secure Encrypted Export
 - **Passkey Protection**: AES-GCM encryption for `.chat` exports.

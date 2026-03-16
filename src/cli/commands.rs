@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 use uuid::Uuid;
 
 #[derive(Parser)]
-#[command(name = "jacox", version, about = "Jacox LLM Chat Server", long_about = None)]
+#[command(name = "stepbit", version, about = "Stepbit LLM Chat Server", long_about = None)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
@@ -24,7 +24,7 @@ pub enum Commands {
         session: Uuid,
     },
     
-    /// Manage Jacox chat sessions
+    /// Manage Stepbit chat sessions
     Session {
         #[command(subcommand)]
         action: SessionAction,

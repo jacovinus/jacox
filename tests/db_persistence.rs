@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use jacox::db::connection;
-    use jacox::db::service::DbService;
-    use jacox::config::DatabaseConfig;
+    use stepbit::db::connection;
+    use stepbit::db::service::DbService;
+    use stepbit::config::DatabaseConfig;
     use serde_json::json;
     
     // In memory database just for tests

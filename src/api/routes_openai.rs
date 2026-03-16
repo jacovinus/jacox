@@ -26,7 +26,7 @@ pub async fn openai_chat_completions(
     // Check for session persistence header
     let session_id = req_http
         .headers()
-        .get("X-Jacox-Session-Id")
+        .get("X-Stepbit-Session-Id")
         .and_then(|h| h.to_str().ok())
         .and_then(|s| Uuid::parse_str(s).ok());
 

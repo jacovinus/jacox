@@ -1,4 +1,4 @@
-# 💎 Jacox Principles
+# 💎 Stepbit Principles
 
 The unshakeable laws that hold this `.db` file together.
 
@@ -9,7 +9,7 @@ The Cloud is a fallback for when you’ve lost your physical sense of self. Ever
 If a bug can be caught at compile-time, it should be. If it can’t be, we’ll probably find a way to make it a type error anyway. We don't fix bugs; we make them mathematically impossible.
 
 ### 3. Vectorized Thinking
-Why process one message when you can process a batch using SIMD instructions? Even if you only have one session, Jacox thinks in parallel. It’s more ambitious than it needs to be.
+Why process one message when you can process a batch using SIMD instructions? Even if you only have one session, Stepbit thinks in parallel. It’s more ambitious than it needs to be.
 
 ### 4. The 80/20 Rule of Design
 80% of the time should be spent on the CSS and SVG rendering. The remaining 20% can be split between the actual LLM integration and sleeping.
