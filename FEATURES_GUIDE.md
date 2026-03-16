@@ -48,11 +48,11 @@ During a stream, you will see real-time status updates:
 ---
 
 ## 4. Internal Service Security (Rolling Tokens) 🛡️
-When communicating with **LLMOS**, Stepbit implements a **Chained Request Security** handshake. After every successful request, LLMOS rotates its internal token and provides a new one via the `X-Next-Token` header.
+When communicating with **stepbit-core**, Stepbit implements a **Chained Request Security** handshake. After every successful request, stepbit-core rotates its internal token and provides a new one via the `X-Next-Token` header.
 
 ### 🛠 Handshake Mechanics
 1. **Initial**: Stepbit uses the Master API Key.
-2. **Handshake**: LLMOS validates and sends back a `X-Next-Token`.
+2. **Handshake**: stepbit-core validates and sends back a `X-Next-Token`.
 3. **Chain**: Stepbit uses that specific token for the next request.
 4. **Safety**: If the chain breaks, it automatically re-syncs using the Master Key.
 
@@ -108,11 +108,11 @@ A persistent library of reusable prompts. Use it to store personas like "Expert 
 ---
 
 ## 10. Live Data Analyst (Snapshot Mode) 📸
-LLMOS can analyze your active `chat.db` without causing locks or latency in your chat sessions.
+stepbit-core can analyze your active `chat.db` without causing locks or latency in your chat sessions.
 
 ### 🛠 How it works
 1. You trigger a pipeline that requires DB access.
-2. LLMOS detects the lock and creates a **Temporary Snapshot**.
+2. stepbit-core detects the lock and creates a **Temporary Snapshot**.
 3. It attaches this snapshot as a `READ_ONLY` database.
 4. The pipeline performs the analysis and reports back, ensuring zero downtime for the main application.
 

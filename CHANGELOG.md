@@ -53,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **MCP Tool Registry**: New dedicated page for exploring registered Model Context Protocol tools and their input schemas.
 - **Reasoning Playground**: Interactive, animated graph visualization based on `framer-motion` for building and executing multi-step reasoning tasks.
-- **LLMOS Remote Engine**: Full integration with the LLMOS Remote Reasoning Engine, supporting parallel node execution and state resolution.
+- **stepbit-core Remote Engine**: Full integration with the stepbit-core Remote Reasoning Engine, supporting parallel node execution and state resolution.
 - **Node 24 & React 19**: Standardized the entire frontend repository on Node.js 24 and React 19 for improved performance and security.
 - **Automated Stack Runner**: Enhanced `run_stack.sh` with Node version enforcement (`nvm`), robust health checks, and improved logging.
 

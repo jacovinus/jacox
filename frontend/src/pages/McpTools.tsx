@@ -62,7 +62,7 @@ const McpTools: React.FC = () => {
 
       {tools.length === 0 && (
         <div className="text-center py-20 bg-gruv-dark-2 rounded-2xl border border-dashed border-gruv-dark-4">
-          <p className="text-gruv-light-4">No MCP tools registered in LLMOS.</p>
+          <p className="text-gruv-light-4">No MCP tools registered in stepbit-core.</p>
         </div>
       )}
     </div>

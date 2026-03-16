@@ -1,10 +1,8 @@
 #[cfg(test)]
 mod tests {
-    use stepbit::db::connection::{SCHEMA, get_connection};
+    use stepbit::db::connection::{SCHEMA};
     use stepbit::db::service::DbService;
-    use stepbit::config::DatabaseConfig;
     use serde_json::json;
-    use uuid::Uuid;
 
     fn setup_test_db() -> duckdb::Connection {
         let conn = duckdb::Connection::open_in_memory().unwrap();
@@ -55,11 +53,11 @@ mod tests {
     async fn test_pipeline_execution_orchestration() {
         use wiremock::matchers::{method, path};
         use wiremock::{Mock, MockServer, ResponseTemplate};
-        use stepbit::llm::llmos::LlmosProvider;
+        use stepbit::llm::stepbit_core::StepbitCoreProvider;
         use stepbit::llm::LlmProvider;
 
         let mock_server = MockServer::start().await;
-        let provider = LlmosProvider::new(mock_server.uri(), "phi-4".to_string(), None);
+        let provider = StepbitCoreProvider::new(mock_server.uri(), "phi-4".to_string(), None);
         
         Mock::given(method("POST"))
             .and(path("/v1/pipelines/execute"))

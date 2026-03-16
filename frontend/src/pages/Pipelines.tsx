@@ -14,13 +14,13 @@ import {
   Layers
 } from 'lucide-react';
 import { pipelinesApi, type Pipeline } from '../api/pipelines';
-import { useLlmos } from '../hooks/useLlmos';
+import { useStepbitCore } from '../hooks/useStepbitCore';
 
 const Pipelines: React.FC = () => {
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const { online, loading: statusLoading, refresh: refreshStatus } = useLlmos();
+  const { online, loading: statusLoading, refresh: refreshStatus } = useStepbitCore();
 
   // Modal States
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -114,7 +114,7 @@ const Pipelines: React.FC = () => {
           <div className={`flex items-center gap-2 px-4 py-2 rounded-full border glass ${online ? 'border-monokai-green/30 bg-monokai-green/5' : 'border-monokai-pink/30 bg-monokai-pink/5'}`}>
             <Activity className={`w-4 h-4 ${online ? 'text-monokai-green animate-pulse' : 'text-monokai-pink'}`} />
             <span className={`text-sm font-bold ${online ? 'text-monokai-green' : 'text-monokai-pink'}`}>
-              LLMOS: {online ? 'Connected' : 'Disconnected'}
+              stepbit-core: {online ? 'Connected' : 'Disconnected'}
             </span>
             <button 
               onClick={refreshStatus}
@@ -439,7 +439,7 @@ const Pipelines: React.FC = () => {
           >
             <XCircle className="w-6 h-6 text-monokai-pink" />
             <div>
-              <p className="font-bold text-monokai-pink">LLMOS is currently offline</p>
+              <p className="font-bold text-monokai-pink">stepbit-core is currently offline</p>
               <p className="text-xs text-gruv-light-3 font-medium">Pipeline execution and tool access are limited.</p>
             </div>
           </motion.div>

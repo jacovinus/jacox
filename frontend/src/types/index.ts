@@ -92,7 +92,7 @@ export interface PipelineExecuteResult {
   intermediate_results: any[];
 }
 
-export interface LlmosStatus {
+export interface StepbitCoreStatus {
   online: boolean;
   message: string;
 }

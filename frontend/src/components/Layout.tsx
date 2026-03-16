@@ -116,7 +116,7 @@ export const Layout = () => {
                             "text-[10px] font-mono uppercase tracking-wider",
                             isOnline && llmosConnected ? "text-monokai-orange" : "text-gruv-gray"
                         )}>
-                            LLMOS: {isOnline && llmosConnected ? "Online" : "Offline"}
+                            stepbit-core: {isOnline && llmosConnected ? "Online" : "Offline"}
                         </span>
                     </div>
                 </div>

@@ -12,10 +12,10 @@ Stepbit uses a hybrid authentication model to balance ease of use with enterpris
 Most REST endpoints require an `Authorization: Bearer <API_KEY>` header.
 - **Default Key**: `sk-dev-key-123` (Change this in `config.yaml`).
 
-### 2. Chained Handshake (Remote LLMOS)
+### 2. Chained Handshake (Remote stepbit-core)
 When communicating with a remote `stepbit-core` instance, Stepbit uses a rotating token mechanism.
 - **Header**: `X-API-Key` is used for the initial handshake.
-- **Rotation**: LLMOS provides a `X-Next-Token` in the response header. 
+- **Rotation**: stepbit-core provides a `X-Next-Token` in the response header. 
 - **Next Request**: Stepbit must use that specific token.
 - **Verification**: This prevents replay attacks and ensures zero-trust connectivity.
 
@@ -113,7 +113,7 @@ Verifies that the Rust kernel and DuckDB engine are active.
   "status": "healthy",
   "api": "connected",
   "database": "connected",
-  "llmos": "connected"
+  "stepbit-core": "connected"
 }
 ```
 

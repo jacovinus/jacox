@@ -15,7 +15,7 @@ export interface PipelineExecuteResult {
   intermediate_results: any[];
 }
 
-export interface LlmosStatus {
+export interface StepbitCoreStatus {
   online: boolean;
   message: string;
 }
@@ -50,8 +50,8 @@ export const pipelinesApi = {
     return response.data;
   },
 
-  getLlmosStatus: async (): Promise<LlmosStatus> => {
-    const response = await client.get('/llmos/status');
+  getStepbitCoreStatus: async (): Promise<StepbitCoreStatus> => {
+    const response = await client.get('/stepbit-core/status');
     return response.data;
   }
 };

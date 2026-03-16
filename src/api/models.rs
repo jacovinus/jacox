@@ -127,7 +127,7 @@ pub struct PipelineExecuteRequest {
 }
 
 #[derive(Debug, Serialize)]
-pub struct LlmosStatusResponse {
+pub struct StepbitCoreStatusResponse {
     pub online: bool,
     pub message: String,
 }

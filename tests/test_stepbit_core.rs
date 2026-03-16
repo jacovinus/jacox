@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use stepbit::llm::llmos::LlmosProvider;
+    use stepbit::llm::stepbit_core::StepbitCoreProvider;
     use stepbit::llm::{
         models::{ChatOptions, Message},
         LlmProvider,
@@ -13,7 +13,7 @@ mod tests {
     async fn test_llmos_chat() {
         let mock_server = MockServer::start().await;
         let token = "test-token".to_string();
-        let provider = LlmosProvider::new(mock_server.uri(), "phi-4".to_string(), Some(token.clone()));
+        let provider = StepbitCoreProvider::new(mock_server.uri(), "phi-4".to_string(), Some(token.clone()));
 
         let messages = vec![Message {
             role: "user".to_string(),
@@ -68,7 +68,7 @@ mod tests {
     async fn test_llmos_token_rotation() {
         let mock_server = MockServer::start().await;
         let master_token = "master-key".to_string();
-        let provider = LlmosProvider::new(mock_server.uri(), "phi-4".to_string(), Some(master_token.clone()));
+        let provider = StepbitCoreProvider::new(mock_server.uri(), "phi-4".to_string(), Some(master_token.clone()));
 
         // 1. Initial request with master token, returns a rotating token
         let next_token = "rotating-123";
@@ -110,7 +110,7 @@ mod tests {
     #[tokio::test]
     async fn test_llmos_get_mcp_tools() {
         let mock_server = MockServer::start().await;
-        let provider = LlmosProvider::new(mock_server.uri(), "phi-4".to_string(), None);
+        let provider = StepbitCoreProvider::new(mock_server.uri(), "phi-4".to_string(), None);
 
         Mock::given(method("GET"))
             .and(path("/v1/mcp/tools"))
@@ -134,7 +134,7 @@ mod tests {
     #[tokio::test]
     async fn test_llmos_execute_reasoning() {
         let mock_server = MockServer::start().await;
-        let provider = LlmosProvider::new(mock_server.uri(), "phi-4".to_string(), None);
+        let provider = StepbitCoreProvider::new(mock_server.uri(), "phi-4".to_string(), None);
 
         Mock::given(method("POST"))
             .and(path("/v1/reasoning/execute"))

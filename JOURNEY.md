@@ -11,7 +11,7 @@ This document serves as the project's roadmap and "travel journal," documenting 
 - **Cognitive Pipelines Engine**: Multi-stage reasoning with deterministic execution.
 - **Glassmorphic UI overhaul**: Premium dark-mode dashboard and live reasoning traces.
 - **DuckDB Snapshotting**: Non-blocking analytical access to live production data.
-- **Pluggable Intelligence**: Decoupled Stepbit and LLMOS for maximum flexibility.
+- **Pluggable Intelligence**: Decoupled Stepbit and stepbit-core for maximum flexibility.
 - **Skills Library**: Managed persona and prompt snippet system.
 
 ---

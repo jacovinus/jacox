@@ -21,8 +21,8 @@ Stepbit isn't just a server; it's a sleek, glassmorphic experience inspired by t
 ## ⚡ Technical Excellence
 - **Rust Core**: Blazing fast, memory-safe execution using Actix-web.
 - **DuckDB Storage**: Analytical conversation memory in a single file (`chat.db`). [Learn more](FEATURES_GUIDE.md#2-local-memory-layer-duckdb)
-- **Pluggable Intelligence**: Seamlessly switch between **OpenAI**, **Anthropic**, **Ollama**, **GitHub Copilot**, and the optional **LLMOS Cognitive Engine**.
-- **Chained Request Security**: Rolling handshake protection for internal LLMOS communication, preventing replay attacks.
+- **Pluggable Intelligence**: Seamlessly switch between **OpenAI**, **Anthropic**, **Ollama**, **GitHub Copilot**, and the optional **stepbit-core Cognitive Engine**.
+- **Chained Request Security**: Rolling handshake protection for internal stepbit-core communication, preventing replay attacks.
 - **DuckDB Snapshotting**: Non-blocking analytical access to live data. [Learn more](FEATURES_GUIDE.md#12-live-data-analyst-snapshot-mode)
 - **Reasoning Graph Engine**: A powerful DAG-based architecture with **Server-Sent Events (SSE)** for real-time node lifecycle tracking.
 - **Cognitive Pipelines**: Structured, deterministic workflows with multi-stage reasoning, MCP integration, and **incremental result streaming**.
@@ -36,7 +36,7 @@ Stepbit isn't just a server; it's a sleek, glassmorphic experience inspired by t
 
 Cognitive Pipelines are the core of Stepbit's automated reasoning. Here is how to get started in 3 steps:
 
-1. **Enable LLMOS**: Ensure `stepbit-core` is running (optional but recommended for advanced pipelines).
+1. **Enable stepbit-core**: Ensure `stepbit-core` is running (optional but recommended for advanced pipelines).
 2. **Import a Pipeline**: Go to the **Pipelines** tab and click **New Pipeline**. Paste a JSON definition.
 3. **Execute**: Ask a question against the pipeline and watch the **Reasoning Trace** unfold in real-time.
 

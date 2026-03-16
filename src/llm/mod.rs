@@ -1,13 +1,13 @@
 pub mod anthropic;
 pub mod copilot;
-pub mod llmos;
+pub mod stepbit_core;
 pub mod models;
 pub mod ollama;
 pub mod openai;
 
 use anthropic::AnthropicProvider;
 use copilot::CopilotProvider;
-use llmos::LlmosProvider;
+use stepbit_core::StepbitCoreProvider;
 use ollama::OllamaProvider;
 use openai::OpenAiProvider;
 
@@ -299,10 +299,10 @@ impl ProviderFactory {
             );
         }
 
-        if let Some(cfg) = &config.llm.llmos {
+        if let Some(cfg) = &config.llm.stepbit_core {
             providers.insert(
-                "llmos".to_string(),
-                Arc::new(LlmosProvider::new(
+                "stepbit-core".to_string(),
+                Arc::new(StepbitCoreProvider::new(
                     cfg.base_url.clone(),
                     cfg.default_model.clone(),
                     cfg.api_key.clone(),

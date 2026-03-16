@@ -8,7 +8,6 @@ use stepbit::api::middleware::ApiKeyAuth;
 use stepbit::llm::ProviderFactory;
 use stepbit::cli::{commands::{Cli, Commands}, run_cli};
 use tracing::{error, info, warn};
-use std::path::PathBuf;
 
 async fn health(db: web::Data<stepbit::db::DbPool>) -> impl Responder {
     let db_status = match db.lock() {

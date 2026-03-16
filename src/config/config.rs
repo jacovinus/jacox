@@ -45,7 +45,7 @@ pub struct CopilotConfig {
 }
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct LlmosConfig {
+pub struct StepbitCoreConfig {
     pub base_url: String,
     pub default_model: String,
     pub api_key: Option<String>,
@@ -59,7 +59,7 @@ pub struct LlmConfig {
     pub anthropic: Option<AnthropicConfig>,
     pub ollama: Option<OllamaConfig>,
     pub copilot: Option<CopilotConfig>,
-    pub llmos: Option<LlmosConfig>,
+    pub stepbit_core: Option<StepbitCoreConfig>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -101,14 +101,14 @@ impl AppConfig {
         if let Some(ref mut copilot) = app_config.llm.copilot {
             copilot.api_key = expand_env(&copilot.api_key);
         }
-        if let Some(ref mut llmos) = app_config.llm.llmos {
-            if let Some(ref key) = llmos.api_key {
+        if let Some(ref mut stepbit_core) = app_config.llm.stepbit_core {
+            if let Some(ref key) = stepbit_core.api_key {
                 let expanded = expand_env(key);
-                if expanded == "${LLMOS_API_KEY}" || expanded.is_empty() {
+                if expanded == "${STEPBIT_CORE_API_KEY}" || expanded.is_empty() {
                     // Fallback to the same default master_token defined in stepbit-core
-                    llmos.api_key = Some("sk-dev-key-123".to_string());
+                    stepbit_core.api_key = Some("sk-dev-key-123".to_string());
                 } else {
-                    llmos.api_key = Some(expanded);
+                    stepbit_core.api_key = Some(expanded);
                 }
             }
         }

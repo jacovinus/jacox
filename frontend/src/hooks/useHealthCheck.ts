@@ -27,13 +27,13 @@ export const useHealthCheck = (): HealthStatus => {
                 const response = await api.get(HEALTH_CHECK_URL, { timeout: 2000 });
                 const data = response.data;
                 
-                // Check LLMOS specifically
+                // Check stepbit-core specifically
                 let llmosConnected = false;
                 try {
-                    const llmosRes = await api.get('llmos/status', { timeout: 2000 });
+                    const llmosRes = await api.get('stepbit-core/status', { timeout: 2000 });
                     llmosConnected = llmosRes.data.online;
                 } catch (e) {
-                    console.warn("LLMOS heath check failed", e);
+                    console.warn("stepbit-core heath check failed", e);
                 }
 
                 setStatus({

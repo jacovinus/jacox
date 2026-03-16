@@ -11,7 +11,7 @@ auth:
   token_expiry_hours: 24
 
 llm:
-  provider: "llmos"  # openai, anthropic, ollama, custom
+  provider: "stepbit-core"  # openai, anthropic, ollama, custom
   model: "mistral-7b"
   
   openai:
@@ -33,10 +33,10 @@ llm:
     api_key: "${GITHUB_COPILOT_API_KEY}"
     default_model: "gpt-4o"
 
-  llmos:
+  stepbit_core:
     base_url: "http://127.0.0.1:3000"
     default_model: "mistral-7b"
-    api_key: "${LLMOS_API_KEY}"
+    api_key: "${STEPBIT_CORE_API_KEY}"
 
 chat:
   max_history_messages: 50

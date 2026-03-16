@@ -1,5 +1,5 @@
 ---
-description: Expert guidance on Stepbit Backend (Rust/Actix-web) architecture, DuckDB integration, and LLMOS proxying.
+description: Expert guidance on Stepbit Backend (Rust/Actix-web) architecture, DuckDB integration, and stepbit-core proxying.
 ---
 
 # Stepbit Backend Expert Skill
@@ -9,12 +9,12 @@ Stepbit is a high-performance orchestration server written in Rust, using `actix
 ## Technical Stack
 - **Framework**: `actix-web` for high-throughput HTTP and WebSockets.
 - **Database**: `DuckDB` used as an analytical conversation memory store (`chat.db`).
-- **Authentication**: Custom `ApiKeyAuth` middleware with support for static keys and rolling LLMOS tokens.
+- **Authentication**: Custom `ApiKeyAuth` middleware with support for static keys and rolling stepbit-core tokens.
 
 ## Architecture & Data Flow
-- **Request Proxying**: The backend acts as a gateway for LLMOS, injecting security headers and managing the rolling token handshake.
-- **MCP Integration**: Proxies `GET /api/llm/mcp/tools` to LLMOS for tool discovery.
-- **Reasoning Execution**: Proxies `POST /api/llm/reasoning/execute` to the LLMOS remote DAG engine.
+- **Request Proxying**: The backend acts as a gateway for stepbit-core, injecting security headers and managing the rolling token handshake.
+- **MCP Integration**: Proxies `GET /api/llm/mcp/tools` to stepbit-core for tool discovery.
+- **Reasoning Execution**: Proxies `POST /api/llm/reasoning/execute` to the stepbit-core remote DAG engine.
 - **WebSocket Hub**: Manages real-time bidirectional communication (`/ws`) for streaming responses and system status.
 
 ## Database Integration

@@ -11,8 +11,8 @@ Integrate the Cognitive Pipelines from `stepbit-core` into the `stepbit` orchest
   - [ ] Define `pipelines` table in `chat.db` (id, name, definition_json, created_at).
   - [ ] Implement CRUD operations in the database layer.
 - **Connectivity & Discovery**:
-  - [ ] Implement a `LlmosStatus` service to poll the health of `stepbit-core`.
-  - [ ] Add a `GET /api/llmos/status` endpoint for the frontend.
+  - [ ] Implement a `StepbitCoreStatus` service to poll the health of `stepbit-core`.
+  - [ ] Add a `GET /api/stepbit-core/status` endpoint for the frontend.
 - **API Endpoints**:
   - [ ] ...
   - [ ] `POST /api/pipelines/execute/:id`: ... Return a clear `503 Service Unavailable` if `stepbit-core` is disconnected.
@@ -24,7 +24,7 @@ Integrate the Cognitive Pipelines from `stepbit-core` into the `stepbit` orchest
 **Objective**: A high-end, premium UI for interacting with cognitive pipelines.
 
 - **Global State / Context**:
-  - [ ] Implement a `useLlmos` hook to track connectivity status.
+  - [ ] Implement a `useStepbitCore` hook to track connectivity status.
 - **Components**:
   - [ ] `Sidebar`: Hide the "Pipelines" item if `stepbit-core` is not detected.
   - [ ] `Page Wrappers`: Show a "Disconnected" notice or redirect if a user manually navigates to a pipeline page while the service is down.

@@ -136,7 +136,7 @@ Require `Authorization: Bearer <api_key>` header for all endpoints except `/heal
 | `GET` | `/pipelines` | List reasoning pipelines |
 | `POST` | `/pipelines/:id/execute` | Run cognitive pipeline |
 | `GET` | `/skills` | List persona templates |
-| `GET` | `/llmos/status` | Heartbeat for reasoning engine |
+| `GET` | `/stepbit-core/status` | Heartbeat for reasoning engine |
 | `POST` | `/v1/chat/completions` | OpenAI Adapter |
 
 ### WebSocket

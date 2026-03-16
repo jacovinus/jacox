@@ -329,7 +329,7 @@ async fn handle_chat_message(
             .await;
 
         let stream_result = stream_handle.await;
-        info!("LLMOS stream worker joined for session {:?}", session_id);
+        info!("stepbit-core stream worker joined for session {:?}", session_id);
 
         let mut next_loop = false;
 

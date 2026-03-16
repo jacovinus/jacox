@@ -20,7 +20,7 @@ The Stepbit frontend is a premium, high-performance React application designed f
 
 ## Connection & Security
 - **API Client**: Uses standard `axios` with relative path resolution to support direct connection to the backend.
-- **Authentication**: Automatically manages the LLMOS rolling token via `localStorage` and `x-next-token` interception.
+- **Authentication**: Automatically manages the stepbit-core rolling token via `localStorage` and `x-next-token` interception.
 - **Environment**: Requires Node.js 24+ and `pnpm` 10+ for development.
 
 ## UX Principles

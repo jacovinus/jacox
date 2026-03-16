@@ -1,6 +1,6 @@
 use actix_web::{delete, get, patch, post, web, HttpResponse, Result as WebResult};
 use std::sync::Arc;
-use crate::api::models::{PipelineRequest, PipelineResponse, PipelineExecuteRequest, LlmosStatusResponse};
+use crate::api::models::{PipelineRequest, PipelineResponse, PipelineExecuteRequest, StepbitCoreStatusResponse};
 use crate::db::{service::DbService, DbPool};
 use crate::llm::LlmProvider;
 
@@ -89,22 +89,22 @@ pub async fn execute_pipeline(
 
     match llm.execute_pipeline(pipeline.definition, req.question.clone()).await {
         Ok(result) => Ok(HttpResponse::Ok().json(result)),
-        Err(e) => Ok(HttpResponse::ServiceUnavailable().body(format!("LLMOS Error: {}", e))),
+        Err(e) => Ok(HttpResponse::ServiceUnavailable().body(format!("stepbit-core Error: {}", e))),
     }
 }
 
-#[get("/llmos/status")]
-pub async fn get_llmos_status(
+#[get("/stepbit-core/status")]
+pub async fn get_stepbit_core_status(
     llm: web::Data<Arc<dyn LlmProvider>>,
 ) -> WebResult<HttpResponse> {
     match llm.verify_connection().await {
-        Ok(_) => Ok(HttpResponse::Ok().json(LlmosStatusResponse {
+        Ok(_) => Ok(HttpResponse::Ok().json(StepbitCoreStatusResponse {
             online: true,
-            message: "LLMOS is online".to_string(),
+            message: "stepbit-core is online".to_string(),
         })),
-        Err(e) => Ok(HttpResponse::Ok().json(LlmosStatusResponse {
+        Err(e) => Ok(HttpResponse::Ok().json(StepbitCoreStatusResponse {
             online: false,
-            message: format!("LLMOS is offline: {}", e),
+            message: format!("stepbit-core is offline: {}", e),
         })),
     }
 }
@@ -129,5 +129,5 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
             .service(delete_pipeline)
             .service(execute_pipeline)
     );
-    cfg.service(get_llmos_status);
+    cfg.service(get_stepbit_core_status);
 }

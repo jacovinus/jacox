@@ -12,7 +12,7 @@ use crate::llm::{
     LlmError, LlmProvider,
 };
 
-pub struct LlmosProvider {
+pub struct StepbitCoreProvider {
     client: Client,
     base_url: String,
     default_model: String,
@@ -20,7 +20,7 @@ pub struct LlmosProvider {
     rotating_token: Arc<std::sync::Mutex<Option<String>>>,
 }
 
-impl LlmosProvider {
+impl StepbitCoreProvider {
     pub fn new(base_url: String, default_model: String, api_key: Option<String>) -> Self {
         Self {
             client: Client::builder()
@@ -106,9 +106,9 @@ impl LlmosProvider {
 }
 
 #[async_trait]
-impl LlmProvider for LlmosProvider {
+impl LlmProvider for StepbitCoreProvider {
     fn name(&self) -> &str {
-        "llmos"
+        "stepbit-core"
     }
 
     async fn chat(
@@ -146,7 +146,7 @@ impl LlmProvider for LlmosProvider {
         if !response.status().is_success() {
             let status = response.status();
             let text = response.text().await.unwrap_or_default();
-            return Err(LlmError::Api(format!("LLMOS Error {}: {}", status, text)));
+            return Err(LlmError::Api(format!("stepbit-core Error {}: {}", status, text)));
         }
 
         let json: serde_json::Value = response
@@ -204,7 +204,7 @@ impl LlmProvider for LlmosProvider {
             let status = response.status();
             let text = response.text().await.unwrap_or_default();
             return Err(LlmError::Api(format!(
-                "LLMOS Stream Error {}: {}",
+                "stepbit-core Stream Error {}: {}",
                 status, text
             )));
         }
@@ -221,13 +221,13 @@ impl LlmProvider for LlmosProvider {
                 Ok(Some(result)) => result.map_err(|e| LlmError::Network(e.to_string()))?,
                 Ok(None) => break, // Stream ended naturally
                 Err(_) => {
-                    error!("LLMOS stream timed out after 30s");
+                    error!("stepbit-core stream timed out after 30s");
                     return Err(LlmError::Network("Stream timeout".to_string()));
                 }
             };
 
             let chunk_str = String::from_utf8_lossy(&chunk);
-            debug!("Received chunk from LLMOS: {:?}", chunk_str);
+            debug!("Received chunk from stepbit-core: {:?}", chunk_str);
             buffer.push_str(&chunk_str);
 
             while let Some(line_end) = buffer.find('\n') {
@@ -273,7 +273,7 @@ impl LlmProvider for LlmosProvider {
                                 if let Some(reason) = choice["finish_reason"].as_str() {
                                     debug!("Stream chunk finish_reason: {}", reason);
                                     // Previously we might have hit 'done: true' and bailed.
-                                    // LLMOS sends 'done: true' when a microbatch finishes or EOS.
+                                    // stepbit-core sends 'done: true' when a microbatch finishes or EOS.
                                     // We should only stop if it's EOS or explicitly Told to.
                                     // Actually, we'll let the loop continue until [DONE] or type: done.
                                 }
@@ -297,7 +297,7 @@ impl LlmProvider for LlmosProvider {
         }
 
         info!(
-            "LlmosProvider::chat_streaming loop finished naturally for session {:?}",
+            "StepbitCoreProvider::chat_streaming loop finished naturally for session {:?}",
             options.user
         );
         
@@ -348,7 +348,7 @@ impl LlmProvider for LlmosProvider {
             Ok(())
         } else {
             Err(LlmError::Api(format!(
-                "LLMOS connection failed with status: {}",
+                "stepbit-core connection failed with status: {}",
                 response.status()
             )))
         }
@@ -368,7 +368,7 @@ impl LlmProvider for LlmosProvider {
         if !response.status().is_success() {
             let status = response.status();
             let text = response.text().await.unwrap_or_default();
-            return Err(LlmError::Api(format!("LLMOS MCP Error {}: {}", status, text)));
+            return Err(LlmError::Api(format!("stepbit-core MCP Error {}: {}", status, text)));
         }
 
         let json: serde_json::Value = response
@@ -397,7 +397,7 @@ impl LlmProvider for LlmosProvider {
         if !response.status().is_success() {
             let status = response.status();
             let text = response.text().await.unwrap_or_default();
-            return Err(LlmError::Api(format!("LLMOS Reasoning Error {}: {}", status, text)));
+            return Err(LlmError::Api(format!("stepbit-core Reasoning Error {}: {}", status, text)));
         }
 
         let json: serde_json::Value = response
@@ -427,7 +427,7 @@ impl LlmProvider for LlmosProvider {
         if !response.status().is_success() {
             let status = response.status();
             let text = response.text().await.unwrap_or_default();
-            return Err(LlmError::Api(format!("LLMOS Reasoning Stream Error {}: {}", status, text)));
+            return Err(LlmError::Api(format!("stepbit-core Reasoning Stream Error {}: {}", status, text)));
         }
 
         let mut stream = response.bytes_stream();
@@ -475,7 +475,7 @@ impl LlmProvider for LlmosProvider {
         if !response.status().is_success() {
             let status = response.status();
             let text = response.text().await.unwrap_or_default();
-            return Err(LlmError::Api(format!("LLMOS Pipeline Error {}: {}", status, text)));
+            return Err(LlmError::Api(format!("stepbit-core Pipeline Error {}: {}", status, text)));
         }
 
         let json: serde_json::Value = response

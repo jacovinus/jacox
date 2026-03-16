@@ -1,10 +1,10 @@
 ---
-description: Expert guidance on LLMOS (Lightweight Local LLM Operating System) internals, API protocols, and reasoning engine.
+description: Expert guidance on stepbit-core (Lightweight Local LLM Operating System) internals, API protocols, and reasoning engine.
 ---
 
-# LLMOS Expert Skill
+# stepbit-core Expert Skill
 
-LLMOS is a lightweight, high-performance LLM operating system with a focus on local inference, observability, and security.
+stepbit-core is a lightweight, high-performance LLM operating system with a focus on local inference, observability, and security.
 
 ## Core Architecture
 - **Kernel**: Orchestrates components (Scheduler, Inference Engine, MCP, Reasoning).
@@ -25,7 +25,7 @@ LLMOS is a lightweight, high-performance LLM operating system with a focus on lo
 - **Health Checks**: `/health` (liveness) and `/ready` (ready to infer) are exempted from auth.
 
 ## Integration Guide
-When connecting to LLMOS:
+When connecting to stepbit-core:
 1. Initialize connection using the `LLMOS_API_KEY` (default `sk-dev-key-123`).
 2. Capture `x-next-token` from every response and use it for the next `Authorization: Bearer <token>` header.
 3. Use `/v1/mcp/tools` to verify availability of specialized engines like DuckDB.

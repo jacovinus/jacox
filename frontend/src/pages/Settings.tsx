@@ -114,7 +114,7 @@ export const Settings = () => {
                                                 <Github className="w-6 h-6 text-monokai-purple" />
                                             ) : (activeProvider?.id === 'ollama' ? (
                                                 <Zap className="w-6 h-6 text-monokai-orange" />
-                                            ) : (activeProvider?.id === 'llmos' ? (
+                                            ) : (activeProvider?.id === 'stepbit-core' ? (
                                                 <Cpu className="w-6 h-6 text-monokai-aqua" />
                                             ) : (
                                                 <Sparkles className="w-6 h-6 text-monokai-aqua" />
@@ -194,7 +194,7 @@ export const Settings = () => {
                                     )}>
                                         {provider.id === 'copilot' ? (
                                             <Github className="w-5 h-5" />
-                                        ) : (provider.id === 'llmos' ? (
+                                        ) : (provider.id === 'stepbit-core' ? (
                                             <Cpu className="w-5 h-5" />
                                         ) : (
                                             <Zap className="w-5 h-5" />
@@ -209,7 +209,7 @@ export const Settings = () => {
                                 <div className="relative z-10">
                                     <p className="font-bold text-lg capitalize">{provider.id}</p>
                                     <p className="text-xs text-gruv-light-4 font-mono mt-1">
-                                        {provider.id === 'ollama' || provider.id === 'llmos' ? 'Local Compute' : 'Cloud Endpoint'}
+                                        {provider.id === 'ollama' || provider.id === 'stepbit-core' ? 'Local Compute' : 'Cloud Endpoint'}
                                     </p>
                                 </div>
                                 {provider.active && (
